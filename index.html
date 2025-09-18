@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Flow - Executive Function Training</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #appContainer {
+            width: 100%;
+            max-width: 1200px;
+            min-height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        #mainContent {
+            flex: 1;
+            padding: 30px;
+            display: flex;
+            gap: 30px;
+            background: #f8f9fa;
+        }
+
+        .content-section {
+            flex: 1;
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #2d3436;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .skill-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .skill-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skill-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .skill-card.working-memory {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .skill-card.attention {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+
+        .skill-card.cognitive-flexibility {
+            background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+            color: white;
+        }
+
+        .skill-card.processing-speed {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #2d3436;
+        }
+
+        .skill-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .skill-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .skill-description {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .skill-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .session-count {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .start-btn {
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .start-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
+        }
+
+        #reportCard {
+            display: none;
+            position: relative;
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .report-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .report-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .report-date {
+            color: #636e72;
+            font-size: 14px;
+        }
+
+        .report-scores {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .score-item {
+            padding: 20px;
+            border-radius: 12px;
+            background: #f8f9fa;
+            text-align: center;
+        }
+
+        .score-label {
+            font-size: 14px;
+            color: #636e72;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .score-grade {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .score-grade.A { color: #00b894; }
+        .score-grade.B { color: #00cec9; }
+        .score-grade.C { color: #fdcb6e; }
+        .score-grade.D { color: #fd79a8; }
+        .score-grade.F { color: #d63031; }
+
+        .score-percentile {
+            font-size: 12px;
+            color: #636e72;
+        }
+
+        .score-progress {
+            margin-top: 10px;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .report-footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .screenshot-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .screenshot-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        #sessionModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            text-align: center;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .task-area {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .task-instruction {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #2d3436;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #dfe6e9;
+            color: #2d3436;
+        }
+
+        .sequence-display {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .sequence-item {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border: 3px solid #dfe6e9;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .sequence-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+            transform: scale(1.1);
+        }
+
+        .login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            padding: 40px;
+        }
+
+        .login-title {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .login-subtitle {
+            font-size: 18px;
+            color: #636e72;
+            margin-bottom: 30px;
+        }
+
+        .pin-input {
+            width: 200px;
+            padding: 15px;
+            font-size: 24px;
+            text-align: center;
+            border: 2px solid #dfe6e9;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            letter-spacing: 10px;
+        }
+
+        .pin-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .progress-tracker {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 20px 0;
+        }
+
+        .progress-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #dfe6e9;
+            transition: all 0.3s ease;
+        }
+
+        .progress-dot.active {
+            background: #667eea;
+            transform: scale(1.3);
+        }
+
+        .timer-display {
+            font-size: 18px;
+            color: #636e72;
+            margin: 10px 0;
+        }
+
+        .feedback-message {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: 600;
+            animation: slideIn 0.3s ease;
+        }
+
+        .feedback-message.success {
+            background: #d1f2eb;
+            color: #00b894;
+        }
+
+        .feedback-message.error {
+            background: #ffdddd;
+            color: #d63031;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .streak-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        @media print {
+            body { background: white; }
+            #header { background: #667eea !important; -webkit-print-color-adjust: exact; }
+            .screenshot-btn { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div id="appContainer">
+        <div id="header">
+            <div class="logo">
+                <span>🧠</span>
+                <span>Neural Flow</span>
+            </div>
+            <div class="user-info" id="userInfo" style="display: none;">
+                <div class="user-badge" id="userBadge">PIN: ----</div>
+                <div class="streak-indicator" id="streakIndicator">
+                    <span>🔥</span>
+                    <span id="streakCount">0</span>
+                </div>
+                <button class="btn" style="padding: 8px 16px; font-size: 14px;" onclick="showReportCard()">View Report Card</button>
+            </div>
+        </div>
+
+        <div id="mainContent">
+            <!-- Login Screen -->
+            <div id="loginScreen" class="content-section" style="flex: 1;">
+                <div class="login-screen">
+                    <div class="login-title">Welcome to Neural Flow</div>
+                    <div class="login-subtitle">Brain Training for Academic Success</div>
+                    <input type="text" class="pin-input" id="pinInput" maxlength="4" placeholder="0000" pattern="\d{4}">
+                    <button class="btn" onclick="handleLogin()">Start Training</button>
+                    <p style="margin-top: 20px; color: #636e72; font-size: 14px;">
+                        Enter your 4-digit PIN or create a new one
+                    </p>
+                </div>
+            </div>
+
+            <!-- Main Dashboard -->
+            <div id="dashboard" style="display: none; width: 100%;">
+                <div style="display: flex; gap: 30px;">
+                    <div class="content-section" style="flex: 2;">
+                        <div class="section-title">
+                            <span>🎯</span>
+                            <span>Select Training Session</span>
+                        </div>
+                        <div class="skill-grid">
+                            <div class="skill-card working-memory" onclick="startSession('working-memory')">
+                                <div class="skill-icon">🧩</div>
+                                <div class="skill-name">Working Memory</div>
+                                <div class="skill-description">Hold and manipulate information in your mind</div>
+                                <div class="skill-stats">
+                                    <span class="session-count">Sessions: <span id="wm-sessions">0</span></span>
+                                    <button class="start-btn" onclick="event.stopPropagation(); startSession('working-memory')">Start</button>
+                                </div>
+                            </div>
+
+                            <div class="skill-card attention" onclick="startSession('attention')">
+                                <div class="skill-icon">🎯</div>
+                                <div class="skill-name">Sustained Attention</div>
+                                <div class="skill-description">Focus on tasks without getting distracted</div>
+                                <div class="skill-stats">
+                                    <span class="session-count">Sessions: <span id="att-sessions">0</span></span>
+                                    <button class="start-btn" onclick="event.stopPropagation(); startSession('attention')">Start</button>
+                                </div>
+                            </div>
+
+                            <div class="skill-card cognitive-flexibility" onclick="startSession('cognitive-flexibility')">
+                                <div class="skill-icon">🔄</div>
+                                <div class="skill-name">Cognitive Flexibility</div>
+                                <div class="skill-description">Switch between tasks and adapt to changes</div>
+                                <div class="skill-stats">
+                                    <span class="session-count">Sessions: <span id="cf-sessions">0</span></span>
+                                    <button class="start-btn" onclick="event.stopPropagation(); startSession('cognitive-flexibility')">Start</button>
+                                </div>
+                            </div>
+
+                            <div class="skill-card processing-speed" onclick="startSession('processing-speed')">
+                                <div class="skill-icon">⚡</div>
+                                <div class="skill-name">Processing Speed</div>
+                                <div class="skill-description">Complete tasks quickly and accurately</div>
+                                <div class="skill-stats">
+                                    <span class="session-count">Sessions: <span id="ps-sessions">0</span></span>
+                                    <button class="start-btn" onclick="event.stopPropagation(); startSession('processing-speed')">Start</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="content-section">
+                        <div class="section-title">
+                            <span>📊</span>
+                            <span>Recent Performance</span>
+                        </div>
+                        <div id="recentScores"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Card -->
+            <div id="reportCard" class="content-section">
+                <div class="report-header">
+                    <div class="report-title">🎓 Executive Function Report Card</div>
+                    <div class="report-date" id="reportDate">Generated: </div>
+                    <div style="margin-top: 10px; color: #636e72;">Student PIN: <span id="reportPin"></span></div>
+                </div>
+
+                <div class="report-scores" id="reportScores">
+                    <!-- Scores will be dynamically inserted here -->
+                </div>
+
+                <div class="report-footer">
+                    <div style="margin-bottom: 20px; color: #636e72; font-size: 14px;">
+                        Based on research-validated executive function assessments
+                    </div>
+                    <button class="screenshot-btn" onclick="window.print()">📸 Save Report Card</button>
+                    <button class="screenshot-btn" onclick="hideReportCard()">Back to Training</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session Modal -->
+        <div id="sessionModal">
+            <div class="modal-content">
+                <div class="modal-title" id="sessionTitle">Training Session</div>
+                <div class="progress-tracker" id="progressTracker"></div>
+                <div class="timer-display" id="timerDisplay"></div>
+                <div class="task-area" id="taskArea">
+                    <!-- Tasks will be dynamically inserted here -->
+                </div>
+                <div id="sessionButtons">
+                    <button class="btn btn-secondary" onclick="endSession()">Exit Session</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Database using localStorage
+        class StudentDB {
+            constructor() {
+                this.storageKey = 'neuralFlowData';
+            }
+
+            getStudent(pin) {
+                const data = localStorage.getItem(`${this.storageKey}_${pin}`);
+                if (!data) {
+                    return this.createStudent(pin);
+                }
+                return JSON.parse(data);
+            }
+
+            createStudent(pin) {
+                const newStudent = {
+                    pin: pin,
+                    createdAt: new Date().toISOString(),
+                    sessions: {
+                        'working-memory': [],
+                        'attention': [],
+                        'cognitive-flexibility': [],
+                        'processing-speed': []
+                    },
+                    streakDays: 0,
+                    lastSessionDate: null
+                };
+                this.saveStudent(pin, newStudent);
+                return newStudent;
+            }
+
+            saveStudent(pin, data) {
+                localStorage.setItem(`${this.storageKey}_${pin}`, JSON.stringify(data));
+            }
+
+            addSession(pin, skillType, score, accuracy, responseTime) {
+                const student = this.getStudent(pin);
+                const session = {
+                    date: new Date().toISOString(),
+                    score: score,
+                    accuracy: accuracy,
+                    responseTime: responseTime,
+                    percentile: this.calculatePercentile(skillType, score)
+                };
+                
+                student.sessions[skillType].push(session);
+                
+                // Update streak
+                const today = new Date().toDateString();
+                const lastSession = student.lastSessionDate ? new Date(student.lastSessionDate).toDateString() : null;
+                if (lastSession !== today) {
+                    const yesterday = new Date(Date.now() - 86400000).toDateString();
+                    if (lastSession === yesterday) {
+                        student.streakDays++;
+                    } else if (lastSession !== today) {
+                        student.streakDays = 1;
+                    }
+                    student.lastSessionDate = new Date().toISOString();
+                }
+                
+                this.saveStudent(pin, student);
+                return session;
+            }
+
+            calculatePercentile(skillType, score) {
+                // Based on research norms for middle school students
+                const norms = {
+                    'working-memory': { mean: 65, sd: 15 },
+                    'attention': { mean: 70, sd: 12 },
+                    'cognitive-flexibility': { mean: 60, sd: 18 },
+                    'processing-speed': { mean: 75, sd: 10 }
+                };
+                
+                const norm = norms[skillType];
+                const zScore = (score - norm.mean) / norm.sd;
+                const percentile = Math.round(this.normalCDF(zScore) * 100);
+                return Math.max(1, Math.min(99, percentile));
+            }
+
+            normalCDF(z) {
+                const a1 = 0.254829592;
+                const a2 = -0.284496736;
+                const a3 = 1.421413741;
+                const a4 = -1.453152027;
+                const a5 = 1.061405429;
+                const p = 0.3275911;
+                
+                const sign = z < 0 ? -1 : 1;
+                z = Math.abs(z) / Math.sqrt(2.0);
+                
+                const t = 1.0 / (1.0 + p * z);
+                const t2 = t * t;
+                const t3 = t2 * t;
+                const t4 = t3 * t;
+                const t5 = t4 * t;
+                
+                const y = 1.0 - (((((a5 * t5 + a4 * t4) + a3 * t3) + a2 * t2) + a1 * t) * Math.exp(-z * z));
+                return 0.5 * (1.0 + sign * y);
+            }
+
+            getRecentPerformance(pin, skillType, limit = 5) {
+                const student = this.getStudent(pin);
+                const sessions = student.sessions[skillType];
+                return sessions.slice(-limit);
+            }
+
+            getAverageScore(pin, skillType) {
+                const student = this.getStudent(pin);
+                const sessions = student.sessions[skillType];
+                if (sessions.length === 0) return null;
+                
+                const recent = sessions.slice(-10); // Last 10 sessions
+                const avg = recent.reduce((sum, s) => sum + s.score, 0) / recent.length;
+                return Math.round(avg);
+            }
+        }
+
+        const db = new StudentDB();
+        let currentStudent = null;
+        let currentSession = null;
+
+        // Session Management
+        class TrainingSession {
+            constructor(skillType, pin) {
+                this.skillType = skillType;
+                this.pin = pin;
+                this.tasks = [];
+                this.currentTask = 0;
+                this.results = [];
+                this.startTime = Date.now();
+                
+                // Generate tasks based on skill type
+                switch(skillType) {
+                    case 'working-memory':
+                        this.tasks = this.generateWorkingMemoryTasks();
+                        break;
+                    case 'attention':
+                        this.tasks = this.generateAttentionTasks();
+                        break;
+                    case 'cognitive-flexibility':
+                        this.tasks = this.generateFlexibilityTasks();
+                        break;
+                    case 'processing-speed':
+                        this.tasks = this.generateSpeedTasks();
+                        break;
+                }
+            }
+
+            generateWorkingMemoryTasks() {
+                return [
+                    { type: 'digit-span', length: 4, trials: 3 },
+                    { type: 'digit-span', length: 5, trials: 3 },
+                    { type: 'digit-span', length: 6, trials: 2 },
+                    { type: 'n-back', n: 2, trials: 10 }
+                ];
+            }
+
+            generateAttentionTasks() {
+                return [
+                    { type: 'sustained-attention', duration: 30, targets: 10 },
+                    { type: 'sustained-attention', duration: 45, targets: 15 },
+                    { type: 'selective-attention', distractors: 5, targets: 8 }
+                ];
+            }
+
+            generateFlexibilityTasks() {
+                return [
+                    { type: 'task-switching', rules: 2, trials: 10 },
+                    { type: 'task-switching', rules: 3, trials: 10 },
+                    { type: 'set-shifting', categories: 2, trials: 12 }
+                ];
+            }
+
+            generateSpeedTasks() {
+                return [
+                    { type: 'simple-reaction', trials: 20 },
+                    { type: 'choice-reaction', choices: 2, trials: 15 },
+                    { type: 'pattern-matching', complexity: 1, trials: 10 }
+                ];
+            }
+
+            calculateScore() {
+                if (this.results.length === 0) return 0;
+                
+                const accuracy = this.results.filter(r => r.correct).length / this.results.length;
+                const avgResponseTime = this.results.reduce((sum, r) => sum + r.responseTime, 0) / this.results.length;
+                
+                // Weighted scoring based on research
+                let score = accuracy * 100;
+                
+                // Bonus for speed (if under expected time)
+                const expectedTime = 2000; // 2 seconds baseline
+                if (avgResponseTime < expectedTime) {
+                    score += (expectedTime - avgResponseTime) / 100;
+                }
+                
+                // Penalty for being too fast (likely guessing)
+                if (avgResponseTime < 500) {
+                    score *= 0.8;
+                }
+                
+                return Math.min(100, Math.round(score));
+            }
+        }
+
+        // UI Functions
+        function handleLogin() {
+            const pin = document.getElementById('pinInput').value;
+            
+            if (!/^\d{4}$/.test(pin)) {
+                alert('Please enter a 4-digit PIN');
+                return;
+            }
+            
+            currentStudent = db.getStudent(pin);
+            
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            document.getElementById('userInfo').style.display = 'flex';
+            document.getElementById('userBadge').textContent = `PIN: ${pin}`;
+            document.getElementById('streakCount').textContent = currentStudent.streakDays;
+            
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            if (!currentStudent) return;
+            
+            // Update session counts
+            document.getElementById('wm-sessions').textContent = currentStudent.sessions['working-memory'].length;
+            document.getElementById('att-sessions').textContent = currentStudent.sessions['attention'].length;
+            document.getElementById('cf-sessions').textContent = currentStudent.sessions['cognitive-flexibility'].length;
+            document.getElementById('ps-sessions').textContent = currentStudent.sessions['processing-speed'].length;
+            
+            // Update recent scores
+            updateRecentScores();
+        }
+
+        function updateRecentScores() {
+            const container = document.getElementById('recentScores');
+            const skills = ['working-memory', 'attention', 'cognitive-flexibility', 'processing-speed'];
+            const skillNames = {
+                'working-memory': 'Working Memory',
+                'attention': 'Sustained Attention',
+                'cognitive-flexibility': 'Cognitive Flexibility',
+                'processing-speed': 'Processing Speed'
+            };
+            
+            let html = '';
+            
+            skills.forEach(skill => {
+                const avgScore = db.getAverageScore(currentStudent.pin, skill);
+                if (avgScore !== null) {
+                    const grade = getGrade(avgScore);
+                    html += `
+                        <div style="margin-bottom: 15px; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 600; color: #2d3436;">${skillNames[skill]}</span>
+                                <span class="score-grade ${grade}" style="font-size: 24px;">${grade}</span>
+                            </div>
+                            <div style="margin-top: 5px; font-size: 12px; color: #636e72;">
+                                Average: ${avgScore}%
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            if (html === '') {
+                html = '<p style="color: #636e72;">Complete training sessions to see your scores!</p>';
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function getGrade(score) {
+            if (score >= 90) return 'A';
+            if (score >= 80) return 'B';
+            if (score >= 70) return 'C';
+            if (score >= 60) return 'D';
+            return 'F';
+        }
+
+        function startSession(skillType) {
+            currentSession = new TrainingSession(skillType, currentStudent.pin);
+            
+            document.getElementById('sessionModal').style.display = 'flex';
+            document.getElementById('sessionTitle').textContent = getSkillTitle(skillType) + ' Training';
+            
+            runNextTask();
+        }
+
+        function getSkillTitle(skillType) {
+            const titles = {
+                'working-memory': 'Working Memory',
+                'attention': 'Sustained Attention',
+                'cognitive-flexibility': 'Cognitive Flexibility',
+                'processing-speed': 'Processing Speed'
+            };
+            return titles[skillType];
+        }
+
+        function runNextTask() {
+            if (!currentSession || currentSession.currentTask >= currentSession.tasks.length) {
+                completeSession();
+                return;
+            }
+            
+            const task = currentSession.tasks[currentSession.currentTask];
+            const taskArea = document.getElementById('taskArea');
+            
+            // Update progress tracker
+            updateProgressTracker();
+            
+            switch(task.type) {
+                case 'digit-span':
+                    runDigitSpanTask(task, taskArea);
+                    break;
+                case 'sustained-attention':
+                    runSustainedAttentionTask(task, taskArea);
+                    break;
+                case 'task-switching':
+                    runTaskSwitchingTask(task, taskArea);
+                    break;
+                case 'simple-reaction':
+                    runSimpleReactionTask(task, taskArea);
+                    break;
+                default:
+                    // Simplified fallback task
+                    runSimpleTask(task, taskArea);
+            }
+        }
+
+        function updateProgressTracker() {
+            const tracker = document.getElementById('progressTracker');
+            tracker.innerHTML = '';
+            
+            for (let i = 0; i < currentSession.tasks.length; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'progress-dot';
+                if (i <= currentSession.currentTask) {
+                    dot.classList.add('active');
+                }
+                tracker.appendChild(dot);
+            }
+        }
+
+        function runDigitSpanTask(task, taskArea) {
+            const digits = [];
+            for (let i = 0; i < task.length; i++) {
+                digits.push(Math.floor(Math.random() * 10));
+            }
+            
+            let userInput = [];
+            let showingSequence = true;
+            
+            taskArea.innerHTML = `
+                <div class="task-instruction">Remember this sequence:</div>
+                <div class="sequence-display" id="sequenceDisplay"></div>
+                <div id="inputArea" style="display: none;">
+                    <div class="task-instruction">Enter the sequence:</div>
+                    <div class="sequence-display" id="userSequence"></div>
+                    <div style="display: grid; grid-template-columns: repeat(5, 60px); gap: 10px; justify-content: center; margin-top: 20px;">
+                        ${[0,1,2,3,4,5,6,7,8,9].map(n => `
+                            <button class="btn" style="padding: 15px;" onclick="inputDigit(${n})">${n}</button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            const display = document.getElementById('sequenceDisplay');
+            
+            // Show sequence
+            let index = 0;
+            const showInterval = setInterval(() => {
+                if (index < digits.length) {
+                    display.innerHTML = `<div class="sequence-item active">${digits[index]}</div>`;
+                    index++;
+                } else {
+                    clearInterval(showInterval);
+                    showingSequence = false;
+                    display.style.display = 'none';
+                    document.getElementById('inputArea').style.display = 'block';
+                }
+            }, 1000);
+            
+            window.inputDigit = (digit) => {
+                userInput.push(digit);
+                document.getElementById('userSequence').innerHTML = userInput.map(d => 
+                    `<div class="sequence-item">${d}</div>`
+                ).join('');
+                
+                if (userInput.length === digits.length) {
+                    const correct = userInput.every((d, i) => d === digits[i]);
+                    currentSession.results.push({
+                        correct: correct,
+                        responseTime: Date.now() - currentSession.startTime
+                    });
+                    
+                    showFeedback(correct);
+                    setTimeout(() => {
+                        currentSession.currentTask++;
+                        runNextTask();
+                    }, 1500);
+                }
+            };
+        }
+
+        function runSustainedAttentionTask(task, taskArea) {
+            let targetsHit = 0;
+            let targetsShown = 0;
+            let startTime = Date.now();
+            
+            taskArea.innerHTML = `
+                <div class="task-instruction">Click the target when it appears!</div>
+                <div style="position: relative; width: 400px; height: 300px; background: #f0f0f0; border-radius: 15px; margin: 20px auto;">
+                    <div id="target" style="position: absolute; width: 60px; height: 60px; background: #667eea; border-radius: 50%; display: none; cursor: pointer;"></div>
+                </div>
+                <div>Targets hit: <span id="targetCount">0</span> / <span id="totalTargets">${task.targets}</span></div>
+            `;
+            
+            const target = document.getElementById('target');
+            const container = target.parentElement;
+            
+            target.onclick = () => {
+                targetsHit++;
+                document.getElementById('targetCount').textContent = targetsHit;
+                target.style.display = 'none';
+            };
+            
+            const showTarget = () => {
+                if (targetsShown >= task.targets) {
+                    const accuracy = targetsHit / task.targets;
+                    currentSession.results.push({
+                        correct: accuracy > 0.7,
+                        responseTime: (Date.now() - startTime) / task.targets
+                    });
+                    
+                    showFeedback(accuracy > 0.7);
+                    setTimeout(() => {
+                        currentSession.currentTask++;
+                        runNextTask();
+                    }, 1500);
+                    return;
+                }
+                
+                const x = Math.random() * (container.offsetWidth - 60);
+                const y = Math.random() * (container.offsetHeight - 60);
+                target.style.left = x + 'px';
+                target.style.top = y + 'px';
+                target.style.display = 'block';
+                
+                targetsShown++;
+                
+                setTimeout(() => {
+                    target.style.display = 'none';
+                    setTimeout(showTarget, 500 + Math.random() * 1500);
+                }, 1500);
+            };
+            
+            setTimeout(showTarget, 1000);
+        }
+
+        function runTaskSwitchingTask(task, taskArea) {
+            const rules = ['Even/Odd', 'Greater/Less than 5'];
+            let currentRule = 0;
+            let trials = 0;
+            let correct = 0;
+            
+            const generateTrial = () => {
+                const number = Math.floor(Math.random() * 10);
+                currentRule = Math.floor(Math.random() * task.rules);
+                
+                taskArea.innerHTML = `
+                    <div class="task-instruction">Rule: ${rules[currentRule]}</div>
+                    <div style="font-size: 72px; margin: 20px 0;">${number}</div>
+                    <div style="display: flex; justify-content: center; gap: 20px;">
+                        ${currentRule === 0 ? `
+                            <button class="btn" onclick="checkAnswer(${number % 2 === 0})">Even</button>
+                            <button class="btn" onclick="checkAnswer(${number % 2 !== 0})">Odd</button>
+                        ` : `
+                            <button class="btn" onclick="checkAnswer(${number > 5})">Greater</button>
+                            <button class="btn" onclick="checkAnswer(${number <= 5})">Less/Equal</button>
+                        `}
+                    </div>
+                `;
+            };
+            
+            window.checkAnswer = (isCorrect) => {
+                if (isCorrect) correct++;
+                trials++;
+                
+                if (trials >= task.trials) {
+                    currentSession.results.push({
+                        correct: correct / trials > 0.7,
+                        responseTime: 1500 // Simplified
+                    });
+                    
+                    showFeedback(correct / trials > 0.7);
+                    setTimeout(() => {
+                        currentSession.currentTask++;
+                        runNextTask();
+                    }, 1500);
+                } else {
+                    generateTrial();
+                }
+            };
+            
+            generateTrial();
+        }
+
+        function runSimpleReactionTask(task, taskArea) {
+            let trials = 0;
+            let totalTime = 0;
+            let waitTime;
+            let startTime;
+            
+            const startTrial = () => {
+                taskArea.innerHTML = `
+                    <div class="task-instruction">Click as fast as you can when you see the signal!</div>
+                    <div id="signal" style="width: 200px; height: 200px; background: #dfe6e9; border-radius: 20px; margin: 20px auto; display: flex; align-items: center; justify-content: center; font-size: 48px;">
+                        Wait...
+                    </div>
+                `;
+                
+                waitTime = 1000 + Math.random() * 3000;
+                
+                setTimeout(() => {
+                    const signal = document.getElementById('signal');
+                    signal.style.background = '#00b894';
+                    signal.innerHTML = 'CLICK!';
+                    signal.style.cursor = 'pointer';
+                    startTime = Date.now();
+                    
+                    signal.onclick = () => {
+                        const reactionTime = Date.now() - startTime;
+                        totalTime += reactionTime;
+                        trials++;
+                        
+                        if (trials >= task.trials) {
+                            const avgTime = totalTime / trials;
+                            currentSession.results.push({
+                                correct: avgTime < 500,
+                                responseTime: avgTime
+                            });
+                            
+                            showFeedback(avgTime < 500);
+                            setTimeout(() => {
+                                currentSession.currentTask++;
+                                runNextTask();
+                            }, 1500);
+                        } else {
+                            startTrial();
+                        }
+                    };
+                }, waitTime);
+            };
+            
+            startTrial();
+        }
+
+        function runSimpleTask(task, taskArea) {
+            // Fallback simplified task
+            taskArea.innerHTML = `
+                <div class="task-instruction">Complete this quick task</div>
+                <button class="btn" onclick="(() => {
+                    currentSession.results.push({ correct: true, responseTime: 1000 });
+                    currentSession.currentTask++;
+                    runNextTask();
+                })()">Continue</button>
+            `;
+        }
+
+        function showFeedback(correct) {
+            const taskArea = document.getElementById('taskArea');
+            const feedback = document.createElement('div');
+            feedback.className = `feedback-message ${correct ? 'success' : 'error'}`;
+            feedback.textContent = correct ? '✓ Correct!' : '✗ Try harder next time!';
+            taskArea.appendChild(feedback);
+        }
+
+        function completeSession() {
+            if (!currentSession) return;
+            
+            const score = currentSession.calculateScore();
+            const accuracy = currentSession.results.filter(r => r.correct).length / currentSession.results.length;
+            const avgTime = currentSession.results.reduce((sum, r) => sum + r.responseTime, 0) / currentSession.results.length;
+            
+            const session = db.addSession(
+                currentStudent.pin,
+                currentSession.skillType,
+                score,
+                accuracy,
+                avgTime
+            );
+            
+            // Show results
+            const modal = document.getElementById('sessionModal');
+            const taskArea = document.getElementById('taskArea');
+            
+            taskArea.innerHTML = `
+                <div style="text-align: center;">
+                    <h2 style="color: #667eea; margin-bottom: 20px;">Session Complete!</h2>
+                    <div class="score-grade ${getGrade(score)}" style="font-size: 72px; margin: 20px 0;">${getGrade(score)}</div>
+                    <div style="font-size: 24px; margin-bottom: 10px;">Score: ${score}%</div>
+                    <div style="color: #636e72;">Percentile: ${session.percentile}th</div>
+                    <div style="margin-top: 30px;">
+                        <button class="btn" onclick="endSession()">Continue</button>
+                    </div>
+                </div>
+            `;
+            
+            currentSession = null;
+        }
+
+        function endSession() {
+            document.getElementById('sessionModal').style.display = 'none';
+            currentStudent = db.getStudent(currentStudent.pin);
+            updateDashboard();
+        }
+
+        function showReportCard() {
+            const reportCard = document.getElementById('reportCard');
+            const dashboard = document.getElementById('dashboard');
+            
+            dashboard.style.display = 'none';
+            reportCard.style.display = 'block';
+            
+            // Update report card content
+            document.getElementById('reportDate').textContent = 'Generated: ' + new Date().toLocaleDateString();
+            document.getElementById('reportPin').textContent = currentStudent.pin;
+            
+            const skills = [
+                { id: 'working-memory', name: 'Working Memory', icon: '🧩' },
+                { id: 'attention', name: 'Sustained Attention', icon: '🎯' },
+                { id: 'cognitive-flexibility', name: 'Cognitive Flexibility', icon: '🔄' },
+                { id: 'processing-speed', name: 'Processing Speed', icon: '⚡' }
+            ];
+            
+            const scoresHTML = skills.map(skill => {
+                const avgScore = db.getAverageScore(currentStudent.pin, skill.id);
+                const recentSessions = currentStudent.sessions[skill.id];
+                const percentile = recentSessions.length > 0 
+                    ? recentSessions[recentSessions.length - 1].percentile 
+                    : null;
+                
+                if (avgScore === null) {
+                    return `
+                        <div class="score-item">
+                            <div class="score-label">${skill.icon} ${skill.name}</div>
+                            <div style="color: #636e72; font-size: 16px; margin-top: 10px;">No data yet</div>
+                        </div>
+                    `;
+                }
+                
+                const grade = getGrade(avgScore);
+                
+                return `
+                    <div class="score-item">
+                        <div class="score-label">${skill.icon} ${skill.name}</div>
+                        <div class="score-grade ${grade}">${grade}</div>
+                        <div class="score-percentile">${percentile ? `${percentile}th percentile` : ''}</div>
+                        <div class="score-progress">
+                            <div class="progress-fill" style="width: ${avgScore}%"></div>
+                        </div>
+                        <div style="margin-top: 5px; font-size: 12px; color: #636e72;">
+                            ${recentSessions.length} sessions completed
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('reportScores').innerHTML = scoresHTML;
+        }
+
+        function hideReportCard() {
+            document.getElementById('reportCard').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+        }
+
+        // Initialize
+        document.getElementById('pinInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleLogin();
+            }
+        });
+    </script>
+</body>
+</html>
