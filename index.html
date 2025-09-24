@@ -3,1265 +3,1247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neural Flow v3 - Adaptive Executive Function Training</title>
+    <title>Neural Flow - Executive Function Training (Enhanced)</title>
     <meta name="description" content="Evidence-based executive function assessment and training for students">
-    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiTmV1cmFsIEZsb3cgdjMiLCJzaG9ydF9uYW1lIjoiTmV1cmFsRmxvdyIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjMWUxYjRiIiwidGhlbWVfY29sb3IiOiIjNjM2NmYxIn0=">
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    console.log = (function(oldLog) {
+    return function(...args) {
+        if (args[0] && typeof args[0] === 'string' && args[0].includes('Tone.js')) return;
+        oldLog.apply(console, args);
+    };
+})(console.log);
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <style>
-        @layer reset, theme, layout, components, utilities;
-        
-        @layer reset {
-            *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-            html { 
-                color-scheme: light dark; 
-                hanging-punctuation: first last;
-                -webkit-font-smoothing: antialiased;
-                text-rendering: optimizeLegibility;
-            }
-            body { min-height: 100dvh; line-height: 1.5; }
-            img, picture, video, canvas, svg { display: block; max-width: 100%; }
-            input, button, textarea, select { font: inherit; }
-            p, h1, h2, h3, h4, h5, h6 { overflow-wrap: break-word; }
+        :root {
+            --primary: #6366f1; --primary-dark: #4f46e5; --success: #10b981;
+            --warning: #f59e0b; --error: #ef4444; --background: #1e1b4b;
+            --surface: #ffffff; --gray-100: #f3f4f6; --gray-300: #d1d5db;
+            --gray-500: #6b7280; --gray-700: #374151; --gray-900: #111827;
         }
-        
-        @layer theme {
-            :root {
-                --primary-h: 239;
-                --primary-s: 84%;
-                --primary-l: 67%;
-                --success-h: 160;
-                --error-h: 0;
-                
-                --primary: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
-                --primary-dark: hsl(var(--primary-h), var(--primary-s), calc(var(--primary-l) - 10%));
-                --success: hsl(var(--success-h), 72%, 42%);
-                --error: hsl(var(--error-h), 72%, 50%);
-                --warning: hsl(38, 92%, 50%);
-                
-                --bg: hsl(243, 47%, 20%);
-                --surface: hsl(0, 0%, 100%);
-                --text: hsl(221, 39%, 11%);
-                --text-muted: hsl(215, 14%, 45%);
-                
-                --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-                --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-                --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-                
-                --radius: 0.5rem;
-                --transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-                
-                --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
-                --font-mono: 'Cascadia Code', 'Fira Code', monospace;
-            }
-            
-            @media (prefers-color-scheme: dark) {
-                :root {
-                    --bg: hsl(0, 0%, 9%);
-                    --surface: hsl(0, 0%, 13%);
-                    --text: hsl(0, 0%, 95%);
-                    --text-muted: hsl(0, 0%, 60%);
-                }
-            }
-            
-            @media (prefers-reduced-motion: reduce) {
-                *, *::before, *::after {
-                    animation-duration: 0.01ms !important;
-                    animation-iteration-count: 1 !important;
-                    transition-duration: 0.01ms !important;
-                    scroll-behavior: auto !important;
-                }
-            }
-            
-            @media (prefers-contrast: high) {
-                :root {
-                    --primary-l: 50%;
-                    --text: hsl(0, 0%, 0%);
-                    --surface: hsl(0, 0%, 100%);
-                }
-            }
-        }
-        
-        @layer layout {
-            body {
-                font-family: var(--font-sans);
-                background: var(--bg);
-                color: var(--text);
-                display: grid;
-                place-items: center;
-            }
-            
-            .app-container {
-                width: min(95vw, 1400px);
-                height: min(95vh, 900px);
-                background: var(--surface);
-                border-radius: calc(var(--radius) * 2);
-                box-shadow: var(--shadow-lg);
-                display: grid;
-                grid-template-rows: auto 1fr;
-                container-type: inline-size;
-                overflow: hidden;
-            }
-            
-            .header {
-                background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-                color: white;
-                padding: 1rem 2rem;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            
-            .main-content {
-                padding: 2rem;
-                overflow-y: auto;
-                scrollbar-gutter: stable;
-            }
-        }
-        
-        @layer components {
-            /* Web Components will inject their styles here */
-            
-            .btn {
-                --btn-bg: var(--primary);
-                --btn-color: white;
-                
-                appearance: none;
-                background: var(--btn-bg);
-                color: var(--btn-color);
-                border: none;
-                border-radius: var(--radius);
-                padding: 0.75rem 1.5rem;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all var(--transition);
-                position: relative;
-                isolation: isolate;
-                user-select: none;
-                touch-action: manipulation;
-            }
-            
-            .btn::before {
-                content: '';
-                position: absolute;
-                inset: 0;
-                border-radius: inherit;
-                background: linear-gradient(135deg, transparent, rgba(255,255,255,0.2));
-                opacity: 0;
-                transition: opacity var(--transition);
-                pointer-events: none;
-            }
-            
-            .btn:hover::before { opacity: 1; }
-            .btn:active { transform: scale(0.98); }
-            .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-            
-            .btn--secondary {
-                --btn-bg: var(--text-muted);
-            }
-            
-            .btn--success {
-                --btn-bg: var(--success);
-            }
-            
-            .input-field {
-                width: 100%;
-                padding: 0.75rem;
-                border: 2px solid var(--text-muted);
-                border-radius: var(--radius);
-                background: var(--surface);
-                color: var(--text);
-                transition: border-color var(--transition);
-            }
-            
-            .input-field:focus {
-                outline: none;
-                border-color: var(--primary);
-                box-shadow: 0 0 0 3px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);
-            }
-            
-            .card {
-                background: var(--surface);
-                border: 2px solid rgba(0,0,0,0.1);
-                border-radius: var(--radius);
-                padding: 1.5rem;
-                transition: all var(--transition);
-            }
-            
-            .card:hover {
-                transform: translateY(-2px);
-                box-shadow: var(--shadow-md);
-            }
-            
-            @container (max-width: 768px) {
-                .responsive-grid {
-                    grid-template-columns: 1fr !important;
-                }
-            }
-        }
-        
-        @layer utilities {
-            .visually-hidden {
-                position: absolute;
-                width: 1px;
-                height: 1px;
-                padding: 0;
-                margin: -1px;
-                overflow: hidden;
-                clip: rect(0, 0, 0, 0);
-                white-space: nowrap;
-                border-width: 0;
-            }
-            
-            .focus-visible {
-                outline: 2px solid var(--primary);
-                outline-offset: 2px;
-            }
-            
-            [data-loading="true"]::after {
-                content: '';
-                position: absolute;
-                inset: 0;
-                background: rgba(255,255,255,0.8);
-                display: grid;
-                place-items: center;
-            }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; background: var(--background); min-height: 100vh; display: flex; justify-content: center; align-items: center; color: var(--gray-900); -webkit-font-smoothing: antialiased; }
+        .container { width: 95%; max-width: 1400px; height: 95vh; max-height: 900px; background: var(--surface); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); overflow: hidden; display: flex; flex-direction: column; }
+        .header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; padding: 15px 32px; text-align: center; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 26px; font-weight: 700; }
+        .gamification-stats { display: flex; align-items: center; gap: 20px; }
+        .stat-item { font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .content { padding: 40px 32px; overflow-y: auto; flex-grow: 1; }
+        h2 { font-size: 26px; font-weight: 700; color: var(--gray-900); margin-bottom: 24px; text-align: center; }
+        h3 { font-size: 18px; font-weight: 600; color: var(--gray-700); margin-bottom: 12px; }
+        .login-form { max-width: 450px; margin: 0 auto; text-align: center; }
+        .login-title { font-size: 42px; font-weight: 800; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 16px; }
+        .input-group { margin: 20px 0; }
+        .input-label { display: block; text-align: left; margin-bottom: 8px; font-weight: 500; color: var(--gray-700); }
+        .input-field { width: 100%; padding: 12px 16px; font-size: 16px; border: 2px solid var(--gray-300); border-radius: 10px; transition: border-color 0.2s; }
+        .input-field:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+        .input-field.invalid { border-color: var(--error); }
+        .input-field:disabled { opacity: 0.5; cursor: not-allowed; }
+        .input-row { display: flex; gap: 16px; }
+        .input-row .input-group { flex: 1; }
+        .error-message { color: var(--error); text-align: center; margin-top: 15px; font-weight: 500; min-height: 20px; }
+        .game-layout { display: grid; grid-template-columns: 1fr 280px; gap: 24px; }
+        .score-sidebar { background: var(--gray-100); border-radius: 12px; padding: 20px; }
+        .score-item { background: white; border-radius: 10px; padding: 14px; margin-bottom: 12px; border: 2px solid var(--gray-300); transition: all 0.2s; }
+        .score-item.completed { border-color: var(--success); background: linear-gradient(to right, rgba(16,185,129,0.05), rgba(16,185,129,0.1)); }
+        .score-value { font-size: 28px; font-weight: 700; color: var(--primary); margin-top: 6px; }
+        .game-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .game-card { background: white; border: 2px solid var(--gray-300); border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.3s; position: relative; min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .game-card:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+        .game-card:hover:not(.completed):not(:disabled) { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-color: var(--primary); }
+        .game-card.completed { background: linear-gradient(135deg, rgba(16,185,129,0.05), rgba(16,185,129,0.1)); border-color: var(--success); cursor: default; }
+        .game-card.completed::after { content: '✓'; position: absolute; top: 12px; right: 12px; background: var(--success); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .game-card.disabled { opacity: 0.5; cursor: not-allowed; }
+        .game-icon { font-size: 48px; margin-bottom: 12px; }
+        .game-title { font-size: 18px; font-weight: 700; color: var(--gray-900); margin-bottom: 6px; }
+        .game-desc { font-size: 13px; color: var(--gray-500); margin-bottom: 12px; }
+        .game-score { font-size: 20px; font-weight: 700; color: var(--success); margin-top: 12px; }
+        .difficulty-badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; background: var(--primary); color: white; margin-top: 8px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; border-radius: 16px; padding: 32px; width: 90%; max-width: 800px; max-height: 85vh; overflow-y: auto; position: relative; }
+        .progress-bar { display: flex; gap: 6px; height: 6px; margin-bottom: 20px; }
+        .progress-segment { flex: 1; background: var(--gray-300); border-radius: 3px; transition: all 0.3s; }
+        .progress-segment.completed { background: var(--success); }
+        .progress-segment.active { background: var(--primary); animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .game-area { background: var(--gray-100); border-radius: 12px; padding: 32px; margin: 20px 0; min-height: 350px; position: relative; }
+        .pause-indicator { position: absolute; top: 10px; right: 10px; padding: 6px 12px; background: var(--warning); color: white; border-radius: 6px; font-size: 12px; font-weight: 600; display: none; }
+        .pause-indicator.active { display: block; animation: blink 1s infinite; }
+        @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .stimulus-display { font-size: 72px; font-weight: 700; color: var(--primary); text-align: center; margin: 32px 0; min-height: 100px; display: flex; align-items: center; justify-content: center; }
+        .sequence-indicator { display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; }
+        .sequence-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gray-300); transition: all 0.3s; }
+        .sequence-dot.active { background: var(--primary); transform: scale(1.5); }
+        .input-display { display: flex; gap: 8px; justify-content: center; margin: 20px 0; }
+        .input-slot { width: 42px; height: 42px; border: 2px solid var(--gray-300); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 600; background: white; transition: all 0.2s; }
+        .input-slot.filled { background: var(--primary); color: white; border-color: var(--primary); }
+        .number-grid { display: grid; grid-template-columns: repeat(5, 56px); gap: 10px; justify-content: center; margin: 20px 0; }
+        .number-btn { width: 56px; height: 56px; background: white; border: 2px solid var(--gray-300); border-radius: 10px; font-size: 20px; font-weight: 600; cursor: pointer; transition: all 0.1s; }
+        .number-btn:hover:not(:disabled) { background: var(--primary); color: white; border-color: var(--primary); transform: scale(1.05); }
+        .number-btn:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+        .number-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .target-area { position: relative; width: 100%; max-width: 500px; height: 320px; background: white; border: 2px solid var(--gray-300); border-radius: 12px; margin: 0 auto; overflow: hidden; }
+        .target { position: absolute; width: 50px; height: 50px; background: var(--primary); border-radius: 50%; cursor: pointer; transition: transform 0.1s; }
+        .target:hover { transform: scale(1.1); }
+        .distractor { position: absolute; width: 50px; height: 50px; background: var(--error); cursor: pointer; }
+        .quick-feedback { position: absolute; top: 10px; right: 10px; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; color: white; animation: quickFade 0.8s forwards; pointer-events: none; z-index: 100; }
+        .quick-feedback.success { background: var(--success); }
+        .quick-feedback.error { background: var(--error); }
+        @keyframes quickFade { 0% { opacity: 0; transform: translateY(-10px); } 50% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-10px); } }
+        .notification { position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; font-weight: 600; color: white; z-index: 10000; animation: slideIn 0.3s ease-out; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .notification-info { background: var(--primary); }
+        .notification-success { background: var(--success); }
+        .notification-warning { background: var(--warning); }
+        .notification-error { background: var(--error); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        .btn { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; border: none; padding: 12px 28px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.1s; }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(99,102,241,0.3); }
+        .btn:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+        .btn:active:not(:disabled) { transform: translateY(0); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary { background: var(--gray-500); }
+        .btn-pause { background: var(--warning); }
+        .report-card { max-width: 900px; margin: 0 auto; }
+        .report-header { text-align: center; padding-bottom: 24px; border-bottom: 2px solid var(--gray-300); margin-bottom: 24px; }
+        .report-title { font-size: 36px; font-weight: 700; color: var(--primary); margin-bottom: 12px; }
+        .report-scores { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 24px; }
+        .report-score-item { background: var(--gray-100); border-radius: 12px; padding: 20px; text-align: center; }
+        .report-grade { font-size: 48px; font-weight: 700; margin: 12px 0; }
+        .percentile { font-size: 14px; color: var(--gray-500); margin-top: 8px; }
+        .grade-A { color: var(--success); }
+        .grade-B { color: #3b82f6; }
+        .grade-C { color: var(--warning); }
+        .grade-D { color: #fb923c; }
+        .grade-F { color: var(--error); }
+        .total-score { text-align: center; padding: 24px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border-radius: 12px; color: white; margin-bottom: 24px; }
+        .total-value { font-size: 56px; font-weight: 800; }
+        .skill-tip { background: #fef3c7; border: 2px solid #fbbf24; border-radius: 12px; padding: 16px; margin-top: 12px; }
+        .skill-tip h4 { color: #92400e; margin-bottom: 8px; }
+        .progress-chart-container { margin-top: 32px; background: var(--gray-100); padding: 24px; border-radius: 12px; }
+        .chart-title { text-align: center; font-size: 20px; font-weight: 600; color: var(--gray-700); margin-bottom: 20px; }
+        .chart { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-items: flex-end; height: 200px; border-left: 2px solid var(--gray-300); border-bottom: 2px solid var(--gray-300); padding-left: 10px; position: relative; }
+        .chart-bar-group { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .chart-bar { background-color: var(--primary); width: 60%; border-radius: 5px 5px 0 0; transition: height 0.5s ease-out; text-align: center; color: white; font-size: 12px; font-weight: 600; padding-top: 5px; }
+        .chart-label { font-size: 14px; font-weight: 500; }
+        .achievements-container { margin-top: 24px; background: var(--gray-100); padding: 24px; border-radius: 12px; }
+        .achievements-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 16px; }
+        .achievement-badge { text-align: center; font-size: 12px; font-weight: 500; opacity: 0.3; transition: opacity 0.3s; cursor: help; }
+        .achievement-badge.unlocked { opacity: 1; }
+        .badge-icon { font-size: 40px; }
+        .badge-name { margin-top: 4px; }
+        .export-data { margin-top: 20px; padding: 16px; background: var(--gray-100); border-radius: 8px; }
+        .export-data h4 { margin-bottom: 12px; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+        .skip-link { position: absolute; top: -40px; left: 0; background: var(--primary); color: white; padding: 8px; z-index: 100; text-decoration: none; }
+        .skip-link:focus { top: 0; }
+        @media print { body { background: white; } .btn, .header, .score-sidebar, .progress-chart-container, .achievements-container { display: none !important; } .content { padding: 0; } .container { box-shadow: none; border-radius: 0; height: auto; } }
+        @media (max-width: 900px) { .header h1 { font-size: 20px; } .gamification-stats { display: none; } }
+        @media (max-width: 768px) { .game-layout { grid-template-columns: 1fr; } .game-grid { grid-template-columns: 1fr; } .report-scores { grid-template-columns: 1fr; } .score-sidebar { order: -1; margin-bottom: 24px; } .chart { grid-template-columns: repeat(2, 1fr); } }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+        @media (prefers-contrast: high) { :root { --primary: #4338ca; --error: #dc2626; --success: #059669; } }
     </style>
 </head>
 <body>
-    <div class="app-container">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <div class="container">
         <header class="header">
-            <h1>🧠 Neural Flow v3</h1>
-            <neural-stats></neural-stats>
+            <h1>🧠 Neural Flow Enhanced</h1>
+            <div class="gamification-stats" id="gamification-header" style="display: none;">
+                <div class="stat-item"><span>🔥</span> <span id="streak-count">0</span></div>
+                <div class="stat-item"><span>🏆</span> <span id="achievement-count">0</span></div>
+                <div class="stat-item"><span>⚡</span> <span id="performance-indicator">100%</span></div>
+            </div>
         </header>
-        
-        <main class="main-content">
-            <neural-router></neural-router>
+        <main class="content" id="main-content">
+            <section id="loginScreen" class="login-form"></section>
+            <section id="gameScreen" style="display: none;" aria-live="polite"></section>
+            <section id="reportScreen" style="display: none;" aria-live="polite"></section>
         </main>
     </div>
-    
+    <div class="modal" id="gameModal" role="dialog" aria-modal="true" aria-labelledby="gameTitle">
+        <div class="modal-content">
+            <h2 id="gameTitle"></h2>
+            <div class="pause-indicator" id="pauseIndicator">PAUSED</div>
+            <div class="progress-bar" id="progressBar" role="progressbar" aria-valuemin="0" aria-valuemax="3"></div>
+            <div class="game-area" id="gameArea"></div>
+            <div style="text-align: center;">
+                <button id="pauseBtn" class="btn btn-pause" style="margin-right: 10px;">Pause</button>
+                <button id="exitBtn" class="btn btn-secondary">Back to Menu</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
-        // Service Worker Registration for PWA
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('data:text/javascript,' + encodeURIComponent(`
-                const CACHE_NAME = 'neural-flow-v3';
-                self.addEventListener('install', e => {
-                    e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['/'])));
-                });
-                self.addEventListener('fetch', e => {
-                    e.respondWith(
-                        caches.match(e.request).then(response => response || fetch(e.request))
-                    );
-                });
-            `));
-        }
-        
-        // Core Application State Management using Proxy for reactivity
-        class StateManager {
-            constructor() {
-                this.listeners = new Map();
-                this.state = new Proxy({
-                    user: null,
-                    session: null,
-                    history: [],
-                    preferences: {
-                        reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-                        highContrast: window.matchMedia('(prefers-contrast: high)').matches,
-                        colorScheme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, enableNetwork, disableNetwork } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Performance monitoring
+            const performanceMonitor = {
+                marks: new Map(),
+                start(label) { this.marks.set(label, performance.now()); },
+                end(label) {
+                    const start = this.marks.get(label);
+                    if (start) {
+                        const duration = performance.now() - start;
+                        if (duration > 100) console.warn(`Performance: ${label} took ${duration.toFixed(2)}ms`);
+                        this.marks.delete(label);
+                        return duration;
                     }
-                }, {
-                    set: (target, prop, value) => {
-                        const oldValue = target[prop];
-                        target[prop] = value;
-                        this.notify(prop, value, oldValue);
-                        this.persist();
-                        return true;
-                    }
-                });
-            }
-            
-            subscribe(path, callback) {
-                if (!this.listeners.has(path)) {
-                    this.listeners.set(path, new Set());
                 }
-                this.listeners.get(path).add(callback);
-                return () => this.listeners.get(path)?.delete(callback);
-            }
-            
-            notify(path, newValue, oldValue) {
-                this.listeners.get(path)?.forEach(cb => cb(newValue, oldValue));
-                this.listeners.get('*')?.forEach(cb => cb({path, newValue, oldValue}));
-            }
-            
-            persist() {
-                const data = {
-                    user: this.state.user,
-                    history: this.state.history.slice(-100), // Keep last 100 sessions
-                    preferences: this.state.preferences
-                };
-                localStorage.setItem('neural-flow-state', JSON.stringify(data));
-            }
-            
-            restore() {
-                try {
-                    const data = JSON.parse(localStorage.getItem('neural-flow-state') || '{}');
-                    Object.assign(this.state, data);
-                } catch(e) {
-                    console.error('Failed to restore state:', e);
-                }
-            }
-        }
-        
-        const stateManager = new StateManager();
-        stateManager.restore();
-        
-        // Advanced Task Scheduler with WebAssembly integration
-        class TaskScheduler {
-            constructor() {
-                this.tasks = new Map();
-                this.wasmModule = null;
-                this.initWasm();
-            }
-            
-            async initWasm() {
-                // Inline WASM for statistical calculations (base64 encoded)
-                const wasmCode = new Uint8Array([
-                    0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00,
-                    0x01, 0x07, 0x01, 0x60, 0x02, 0x7f, 0x7f, 0x01, 0x7f,
-                    0x03, 0x02, 0x01, 0x00, 0x07, 0x07, 0x01, 0x03, 0x61, 0x64, 0x64, 0x00, 0x00,
-                    0x0a, 0x09, 0x01, 0x07, 0x00, 0x20, 0x00, 0x20, 0x01, 0x6a, 0x0b
-                ]);
-                const module = await WebAssembly.instantiate(wasmCode);
-                this.wasmModule = module.instance;
-            }
-            
-            schedule(taskId, fn, interval, options = {}) {
-                const task = {
-                    fn,
-                    interval,
-                    lastRun: 0,
-                    priority: options.priority || 0,
-                    adaptive: options.adaptive || false
-                };
-                this.tasks.set(taskId, task);
-            }
-            
-            async run(taskId) {
-                const task = this.tasks.get(taskId);
-                if (!task) return;
+            };
+
+            performanceMonitor.start('app-init');
+
+            // Initialize Firebase with error handling
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'neural-flow-enhanced';
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+            let app, db, auth, userId, isOffline = false;
+
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
                 
-                const now = performance.now();
-                if (now - task.lastRun < task.interval) return;
-                
-                task.lastRun = now;
-                
-                if ('requestIdleCallback' in window) {
-                    requestIdleCallback(() => task.fn(), { timeout: task.interval });
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
-                    task.fn();
+                    await signInAnonymously(auth);
                 }
-                
-                if (task.adaptive && this.wasmModule) {
-                    // Use WASM for performance calculations
-                    const adjustment = this.wasmModule.exports.add(1, Math.floor(task.interval / 100));
-                    task.interval = Math.max(100, task.interval - adjustment);
+                userId = auth.currentUser?.uid;
+            } catch (error) {
+                console.error("Firebase init failed, running in offline mode:", error);
+                isOffline = true;
+            }
+
+            // Enhanced state management with validation
+            let state = {
+                userProfile: { name: '', age: 12, docRef: null, streak: 0, lastSession: null, achievements: [], adaptiveParams: {} },
+                sessionScores: { memory: null, attention: null, flexibility: null, speed: null },
+                history: [],
+                currentGame: null,
+                currentTask: 0,
+                taskResults: [],
+                clickLock: false,
+                lowestSkill: null,
+                isPaused: false,
+                sessionStartTime: null,
+                activeListeners: [],
+                activeTimers: [],
+                activeIntervals: [],
+                pendingOperations: [],
+                performanceData: { fps: 60, latency: 0 },
+                cleanupCurrentGame: () => {}
+            };
+
+            // Age-based normative data (percentiles from developmental psychology research)
+            const ageNorms = {
+                8: { memory: [40,50,60,70,80], attention: [150,175,200,225,250], flexibility: [0.65,0.70,0.75,0.80,0.85], speed: [800,750,700,650,600] },
+                9: { memory: [45,55,65,75,85], attention: [160,185,210,235,260], flexibility: [0.68,0.73,0.78,0.83,0.88], speed: [780,730,680,630,580] },
+                10: { memory: [50,60,70,80,90], attention: [170,195,220,245,270], flexibility: [0.70,0.75,0.80,0.85,0.90], speed: [760,710,660,610,560] },
+                11: { memory: [55,65,75,85,95], attention: [180,205,230,255,280], flexibility: [0.72,0.77,0.82,0.87,0.92], speed: [740,690,640,590,540] },
+                12: { memory: [60,70,80,90,100], attention: [190,215,240,265,290], flexibility: [0.74,0.79,0.84,0.89,0.94], speed: [720,670,620,570,520] },
+                13: { memory: [65,75,85,95,105], attention: [200,225,250,275,300], flexibility: [0.76,0.81,0.86,0.91,0.96], speed: [700,650,600,550,500] },
+                14: { memory: [70,80,90,100,110], attention: [210,235,260,285,310], flexibility: [0.78,0.83,0.88,0.93,0.98], speed: [680,630,580,530,480] },
+                15: { memory: [75,85,95,105,115], attention: [220,245,270,295,320], flexibility: [0.80,0.85,0.90,0.95,1.00], speed: [660,610,560,510,460] },
+                16: { memory: [80,90,100,110,120], attention: [230,255,280,305,330], flexibility: [0.82,0.87,0.92,0.97,1.02], speed: [640,590,540,490,440] },
+                17: { memory: [85,95,105,115,125], attention: [240,265,290,315,340], flexibility: [0.84,0.89,0.94,0.99,1.04], speed: [620,570,520,470,420] },
+                18: { memory: [90,100,110,120,130], attention: [250,275,300,325,350], flexibility: [0.86,0.91,0.96,1.01,1.06], speed: [600,550,500,450,400] }
+            };
+
+            const achievementsList = {
+                first_session: { name: "First Step", icon: "👟", description: "Complete your first session" },
+                streak_3: { name: "On a Roll", icon: "🔥", description: "3 day streak" },
+                streak_7: { name: "Week Warrior", icon: "📅", description: "7 day streak" },
+                memory_90: { name: "Total Recall", icon: "🐘", description: "90+ in Working Memory" },
+                attention_90: { name: "Laser Focus", icon: "🎯", description: "90+ in Sustained Attention" },
+                flexibility_90: { name: "Quick Thinker", icon: "💡", description: "90+ in Cognitive Flexibility" },
+                speed_90: { name: "Lightning Fast", icon: "⚡️", description: "90+ in Processing Speed" },
+                perfect_session: { name: "Perfectionist", icon: "💯", description: "100% in any task" },
+                all_complete: { name: "Well Rounded", icon: "🎖️", description: "Complete all 4 tasks" },
+                improvement_20: { name: "Rising Star", icon: "📈", description: "20% improvement" }
+            };
+
+            let screens, loginInputs, gameModal, synth;
+
+            // Enhanced audio with error handling
+            try {
+                synth = new Tone.Synth().toDestination();
+            } catch(e) {
+                console.warn("Audio initialization failed:", e);
+            }
+
+            const playSound = (correct) => {
+                if (!synth || state.userProfile.soundEnabled === false) return;
+                try {
+                    if (Tone.context.state !== 'running') Tone.start();
+                    synth.triggerAttackRelease(correct ? "C5" : "C3", "8n");
+                } catch(e) {}
+            };
+
+            // Helper functions
+            function sanitizeInput(input, type = 'text') {
+                if (type === 'name') return input.replace(/<[^>]*>/g, '').trim().slice(0, 50);
+                if (type === 'age') {
+                    const age = parseInt(input);
+                    return isNaN(age) ? null : Math.max(6, Math.min(18, age));
                 }
+                return input;
             }
-        }
-        
-        const scheduler = new TaskScheduler();
-        
-        // Custom Elements (Web Components)
-        class NeuralStats extends HTMLElement {
-            constructor() {
-                super();
-                this.attachShadow({ mode: 'open' });
+
+            function addTrackedListener(element, event, handler, options = {}) {
+                if (!element) return;
+                element.addEventListener(event, handler, options);
+                state.activeListeners.push({ element, event, handler, options });
             }
-            
-            connectedCallback() {
-                this.render();
-                stateManager.subscribe('user', () => this.render());
-                stateManager.subscribe('session', () => this.render());
-            }
-            
-            render() {
-                const user = stateManager.state.user;
-                const streak = this.calculateStreak();
-                
-                this.shadowRoot.innerHTML = `
-                    <style>
-                        :host {
-                            display: flex;
-                            gap: 1rem;
-                            align-items: center;
-                            color: white;
-                        }
-                        .stat { display: flex; gap: 0.5rem; align-items: center; }
-                        .stat-value { font-weight: bold; }
-                        @media (max-width: 768px) {
-                            :host { display: none; }
-                        }
-                    </style>
-                    ${user ? `
-                        <div class="stat">🔥 <span class="stat-value">${streak}</span></div>
-                        <div class="stat">⭐ <span class="stat-value">${user.level || 1}</span></div>
-                        <div class="stat">🏆 <span class="stat-value">${user.achievements?.length || 0}</span></div>
-                    ` : ''}
-                `;
-            }
-            
-            calculateStreak() {
-                const history = stateManager.state.history;
-                if (!history.length) return 0;
-                
-                let streak = 0;
-                const today = new Date().toDateString();
-                const dates = [...new Set(history.map(h => new Date(h.date).toDateString()))];
-                
-                for (let i = dates.length - 1; i >= 0; i--) {
-                    const date = new Date(dates[i]);
-                    const prevDate = i > 0 ? new Date(dates[i-1]) : null;
-                    
-                    if (dates[i] === today || 
-                        (prevDate && (date - prevDate) === 86400000)) {
-                        streak++;
-                    } else {
-                        break;
-                    }
-                }
-                
-                return streak;
-            }
-        }
-        
-        class NeuralRouter extends HTMLElement {
-            constructor() {
-                super();
-                this.routes = new Map();
-                this.currentRoute = 'login';
-            }
-            
-            connectedCallback() {
-                this.setupRoutes();
-                this.navigate(stateManager.state.user ? 'dashboard' : 'login');
-                
-                // Handle browser back/forward
-                window.addEventListener('popstate', () => {
-                    this.navigate(location.hash.slice(1) || 'login', false);
+
+            function cleanupResources() {
+                state.activeListeners.forEach(({ element, event, handler, options }) => {
+                    element?.removeEventListener(event, handler, options);
                 });
+                state.activeListeners = [];
+                state.activeTimers.forEach(timer => clearTimeout(timer));
+                state.activeTimers = [];
+                state.activeIntervals.forEach(interval => clearInterval(interval));
+                state.activeIntervals = [];
             }
-            
-            setupRoutes() {
-                this.routes.set('login', () => `<neural-login></neural-login>`);
-                this.routes.set('dashboard', () => `<neural-dashboard></neural-dashboard>`);
-                this.routes.set('game', () => `<neural-game></neural-game>`);
-                this.routes.set('report', () => `<neural-report></neural-report>`);
-            }
-            
-            navigate(route, updateHistory = true) {
-                if (!this.routes.has(route)) route = 'login';
-                
-                this.currentRoute = route;
-                const content = this.routes.get(route)();
-                this.innerHTML = content;
-                
-                if (updateHistory) {
-                    history.pushState({route}, '', `#${route}`);
-                }
-                
-                // Announce route change for screen readers
-                this.setAttribute('aria-live', 'polite');
-                this.setAttribute('aria-atomic', 'true');
-                this.setAttribute('aria-label', `Navigated to ${route}`);
-            }
-        }
-        
-        class NeuralLogin extends HTMLElement {
-            connectedCallback() {
-                this.innerHTML = `
-                    <div style="max-width: 450px; margin: 0 auto; text-align: center;">
-                        <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">Welcome to Neural Flow</h2>
-                        <p style="margin-bottom: 2rem;">Evidence-based executive function training</p>
-                        
-                        <form id="login-form">
-                            <div style="margin-bottom: 1rem;">
-                                <label for="name" class="visually-hidden">Name</label>
-                                <input type="text" id="name" class="input-field" placeholder="Your name" 
-                                       required aria-required="true" autocomplete="name">
-                            </div>
-                            
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                                <div>
-                                    <label for="age" class="visually-hidden">Age</label>
-                                    <input type="number" id="age" class="input-field" placeholder="Age" 
-                                           min="6" max="18" required aria-required="true">
-                                </div>
-                                <div>
-                                    <label for="grade" class="visually-hidden">Grade</label>
-                                    <select id="grade" class="input-field" required aria-required="true">
-                                        <option value="">Grade</option>
-                                        ${[...Array(8)].map((_, i) => `<option value="${i+5}">${i+5}th</option>`).join('')}
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <button type="submit" class="btn" style="width: 100%;">Start Training</button>
-                        </form>
-                        
-                        <div id="error-message" role="alert" aria-live="assertive" style="color: var(--error); margin-top: 1rem;"></div>
-                    </div>
-                `;
-                
-                this.querySelector('#login-form').addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    this.handleLogin();
-                });
-            }
-            
-            handleLogin() {
-                const name = this.querySelector('#name').value.trim();
-                const age = parseInt(this.querySelector('#age').value);
-                const grade = this.querySelector('#grade').value;
-                
-                if (!name || !age || !grade) {
-                    this.querySelector('#error-message').textContent = 'Please fill all fields';
-                    return;
-                }
-                
-                // Create user profile with adaptive parameters
-                stateManager.state.user = {
-                    id: crypto.randomUUID(),
-                    name,
-                    age,
-                    grade,
-                    level: 1,
-                    experience: 0,
-                    achievements: [],
-                    adaptiveParams: this.calculateAdaptiveParams(age, grade),
-                    created: Date.now()
-                };
-                
-                document.querySelector('neural-router').navigate('dashboard');
-            }
-            
-            calculateAdaptiveParams(age, grade) {
-                // Evidence-based parameters from developmental psychology research
-                return {
-                    workingMemorySpan: Math.min(7, 3 + Math.floor(age / 3)),
-                    attentionDuration: 180 + (age * 20), // milliseconds
-                    processingSpeed: 1000 - (age * 40), // base reaction time
-                    cognitiveFlexibility: 0.5 + (age * 0.03), // switch cost coefficient
-                    inhibitionControl: 0.6 + (grade * 0.05), // accuracy threshold
-                    adaptiveRate: 0.1 // learning rate for difficulty adjustment
-                };
-            }
-        }
-        
-        class NeuralDashboard extends HTMLElement {
-            constructor() {
-                super();
-                this.games = [
-                    {
-                        id: 'n-back',
-                        name: 'N-Back',
-                        icon: '🧩',
-                        description: 'Working memory training with adaptive N levels',
-                        color: 'hsl(239, 84%, 67%)'
-                    },
-                    {
-                        id: 'cpt',
-                        name: 'CPT-X',
-                        icon: '🎯',
-                        description: 'Continuous Performance Task for sustained attention',
-                        color: 'hsl(160, 72%, 42%)'
-                    },
-                    {
-                        id: 'wcst',
-                        name: 'Card Sort',
-                        icon: '🔄',
-                        description: 'Wisconsin Card Sorting for cognitive flexibility',
-                        color: 'hsl(38, 92%, 50%)'
-                    },
-                    {
-                        id: 'stroop',
-                        name: 'Stroop',
-                        icon: '⚡',
-                        description: 'Color-word interference for processing speed',
-                        color: 'hsl(0, 72%, 50%)'
-                    }
-                ];
-            }
-            
-            connectedCallback() {
-                this.render();
-                this.setupEventListeners();
-            }
-            
-            render() {
-                const user = stateManager.state.user;
-                const completedToday = this.getCompletedToday();
-                
-                this.innerHTML = `
-                    <div style="margin-bottom: 2rem;">
-                        <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">
-                            Welcome back, ${user.name}!
-                        </h2>
-                        <p>Level ${user.level} • ${user.experience} XP</p>
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;" 
-                         class="responsive-grid">
-                        ${this.games.map(game => `
-                            <div class="card game-card" data-game="${game.id}" 
-                                 style="cursor: pointer; ${completedToday.includes(game.id) ? 'opacity: 0.6;' : ''}"
-                                 role="button" tabindex="0" 
-                                 aria-label="${game.name} - ${game.description}">
-                                <div style="font-size: 3rem; text-align: center; margin-bottom: 1rem;">
-                                    ${game.icon}
-                                </div>
-                                <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">${game.name}</h3>
-                                <p style="color: var(--text-muted); font-size: 0.875rem;">
-                                    ${game.description}
-                                </p>
-                                ${completedToday.includes(game.id) ? 
-                                    '<p style="color: var(--success); margin-top: 1rem;">✓ Completed today</p>' : ''}
-                            </div>
-                        `).join('')}
-                    </div>
-                    
-                    <div style="margin-top: 2rem; text-align: center;">
-                        <button class="btn btn--secondary" id="view-report">View Progress Report</button>
-                    </div>
-                `;
-            }
-            
-            setupEventListeners() {
-                this.querySelectorAll('.game-card').forEach(card => {
-                    const gameId = card.dataset.game;
-                    
-                    card.addEventListener('click', () => this.startGame(gameId));
-                    card.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            this.startGame(gameId);
-                        }
-                    });
-                });
-                
-                this.querySelector('#view-report')?.addEventListener('click', () => {
-                    document.querySelector('neural-router').navigate('report');
-                });
-            }
-            
-            getCompletedToday() {
-                const today = new Date().toDateString();
-                return stateManager.state.history
-                    .filter(h => new Date(h.date).toDateString() === today)
-                    .map(h => h.gameId);
-            }
-            
-            startGame(gameId) {
-                stateManager.state.session = {
-                    gameId,
-                    startTime: Date.now(),
-                    trials: [],
-                    adaptiveLevel: this.getAdaptiveLevel(gameId)
-                };
-                
-                document.querySelector('neural-router').navigate('game');
-            }
-            
-            getAdaptiveLevel(gameId) {
-                const history = stateManager.state.history.filter(h => h.gameId === gameId);
-                if (!history.length) return 1;
-                
-                const recent = history.slice(-5);
-                const avgScore = recent.reduce((sum, h) => sum + h.score, 0) / recent.length;
-                
-                if (avgScore > 85) return Math.min(10, (history[history.length-1].level || 1) + 1);
-                if (avgScore < 60) return Math.max(1, (history[history.length-1].level || 1) - 1);
-                return history[history.length-1].level || 1;
-            }
-        }
-        
-        class NeuralGame extends HTMLElement {
-            constructor() {
-                super();
-                this.gameEngine = null;
-                this.abortController = new AbortController();
-            }
-            
-            connectedCallback() {
-                const session = stateManager.state.session;
-                if (!session) {
-                    document.querySelector('neural-router').navigate('dashboard');
-                    return;
-                }
-                
-                this.initGame(session.gameId);
-            }
-            
-            disconnectedCallback() {
-                this.abortController.abort();
-                this.gameEngine?.cleanup();
-            }
-            
-            async initGame(gameId) {
-                // Dynamic game engine loading based on game type
-                const engines = {
-                    'n-back': NBackEngine,
-                    'cpt': CPTEngine,
-                    'wcst': WCSTEngine,
-                    'stroop': StroopEngine
-                };
-                
-                const EngineClass = engines[gameId];
-                this.gameEngine = new EngineClass(this, stateManager.state);
-                await this.gameEngine.init();
-                this.gameEngine.start();
-            }
-            
-            endGame(results) {
-                const session = stateManager.state.session;
-                const score = this.calculateScore(results);
-                
-                const record = {
-                    gameId: session.gameId,
-                    date: Date.now(),
-                    score,
-                    level: session.adaptiveLevel,
-                    trials: results,
-                    duration: Date.now() - session.startTime
-                };
-                
-                stateManager.state.history = [...stateManager.state.history, record];
-                
-                // Update user progress
-                const user = stateManager.state.user;
-                user.experience += Math.floor(score / 10);
-                if (user.experience >= user.level * 100) {
-                    user.level++;
-                    user.experience = user.experience % 100;
-                    this.unlockAchievement('level_up');
-                }
-                
-                stateManager.state.user = {...user};
-                stateManager.state.session = null;
-                
-                document.querySelector('neural-router').navigate('report');
-            }
-            
-            calculateScore(results) {
-                const correct = results.filter(r => r.correct).length;
-                const accuracy = correct / results.length;
-                const avgRT = results.reduce((sum, r) => sum + (r.rt || 0), 0) / results.length;
-                const rtScore = Math.max(0, 100 - (avgRT / 20));
-                
-                return Math.round(accuracy * 70 + rtScore * 0.3);
-            }
-            
-            unlockAchievement(id) {
-                const user = stateManager.state.user;
-                if (!user.achievements.includes(id)) {
-                    user.achievements.push(id);
-                    this.showNotification(`🏆 Achievement Unlocked: ${id}`);
-                }
-            }
-            
-            showNotification(message) {
+
+            function showNotification(message, type = 'info') {
                 const notification = document.createElement('div');
-                notification.style.cssText = `
-                    position: fixed;
-                    top: 2rem;
-                    right: 2rem;
-                    background: var(--success);
-                    color: white;
-                    padding: 1rem;
-                    border-radius: var(--radius);
-                    box-shadow: var(--shadow-lg);
-                    animation: slideIn 0.3s ease-out;
-                    z-index: 1000;
-                `;
+                notification.className = `notification notification-${type}`;
                 notification.textContent = message;
+                notification.setAttribute('role', 'status');
+                notification.setAttribute('aria-live', 'polite');
                 document.body.appendChild(notification);
                 
-                setTimeout(() => {
-                    notification.style.animation = 'slideOut 0.3s ease-in';
+                const timer = setTimeout(() => {
+                    notification.style.animation = 'fadeOut 0.3s ease-out';
                     setTimeout(() => notification.remove(), 300);
                 }, 3000);
+                state.activeTimers.push(timer);
             }
-        }
-        
-        // Game Engines
-        class GameEngine {
-            constructor(container, state) {
-                this.container = container;
-                this.state = state;
-                this.trials = [];
-                this.currentTrial = 0;
-            }
-            
-            async init() {
-                this.renderUI();
-                await this.loadResources();
-            }
-            
-            renderUI() {
-                this.container.innerHTML = `
-                    <div style="text-align: center; padding: 2rem;">
-                        <h2 id="game-title" style="margin-bottom: 2rem;"></h2>
-                        <div id="game-area" style="min-height: 400px;"></div>
-                        <div id="game-controls" style="margin-top: 2rem;">
-                            <button class="btn btn--secondary" id="exit-game">Exit</button>
-                        </div>
-                    </div>
-                `;
-                
-                this.container.querySelector('#exit-game').addEventListener('click', () => {
-                    if (confirm('Are you sure you want to exit? Progress will be lost.')) {
-                        document.querySelector('neural-router').navigate('dashboard');
+
+            async function safeFirebaseOp(operation, fallback) {
+                if (isOffline) {
+                    if (fallback) fallback();
+                    return null;
+                }
+                try {
+                    return await operation();
+                } catch (error) {
+                    console.error('Firebase operation failed:', error);
+                    if (fallback) {
+                        const opData = { type: 'update', data: {...state.userProfile}, timestamp: Date.now() };
+                        state.pendingOperations.push(opData);
+                        localStorage.setItem('neural-flow-pending', JSON.stringify(state.pendingOperations));
+                        showNotification('Saved locally. Will sync when online.', 'warning');
+                        fallback();
                     }
-                });
-            }
-            
-            async loadResources() {
-                // Override in subclasses
-            }
-            
-            start() {
-                // Override in subclasses
-            }
-            
-            cleanup() {
-                // Override in subclasses
-            }
-            
-            recordTrial(data) {
-                this.trials.push({
-                    ...data,
-                    timestamp: Date.now(),
-                    trial: this.currentTrial++
-                });
-            }
-        }
-        
-        class NBackEngine extends GameEngine {
-            async init() {
-                super.init();
-                this.n = this.state.session.adaptiveLevel;
-                this.sequence = [];
-                this.position = 0;
-                this.audioContext = new AudioContext();
-                
-                this.container.querySelector('#game-title').textContent = `${this.n}-Back Task`;
-            }
-            
-            start() {
-                this.generateSequence();
-                this.presentStimulus();
-            }
-            
-            generateSequence() {
-                const length = 20 + this.n * 3;
-                const items = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-                
-                for (let i = 0; i < length; i++) {
-                    if (i >= this.n && Math.random() < 0.3) {
-                        // Create n-back match
-                        this.sequence.push(this.sequence[i - this.n]);
-                    } else {
-                        this.sequence.push(items[Math.floor(Math.random() * items.length)]);
-                    }
+                    return null;
                 }
             }
-            
-            presentStimulus() {
-                if (this.position >= this.sequence.length) {
-                    this.container.endGame(this.trials);
+
+            async function syncPendingOperations() {
+                if (isOffline || !state.pendingOperations.length) return;
+                
+                const successful = [];
+                for (const op of state.pendingOperations) {
+                    try {
+                        if (state.userProfile.docRef) {
+                            await updateDoc(state.userProfile.docRef, op.data);
+                            successful.push(op);
+                        }
+                    } catch (e) {
+                        console.error('Sync failed:', e);
+                    }
+                }
+                
+                state.pendingOperations = state.pendingOperations.filter(op => !successful.includes(op));
+                localStorage.setItem('neural-flow-pending', JSON.stringify(state.pendingOperations));
+                
+                if (successful.length > 0) {
+                    showNotification(`Synced ${successful.length} pending operations`, 'success');
+                }
+            }
+
+            function saveLocalState() {
+                const localData = {
+                    userProfile: state.userProfile,
+                    history: state.history.slice(-100),
+                    sessionScores: state.sessionScores,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('neural-flow-state', JSON.stringify(localData));
+            }
+
+            function loadLocalState() {
+                try {
+                    const saved = localStorage.getItem('neural-flow-state');
+                    if (saved) {
+                        const data = JSON.parse(saved);
+                        if (Date.now() - data.timestamp < 7 * 24 * 60 * 60 * 1000) { // 7 days
+                            Object.assign(state, data);
+                            return true;
+                        }
+                    }
+                } catch(e) {
+                    console.error('Failed to load local state:', e);
+                }
+                return false;
+            }
+
+            function calculateAdaptiveParams(age, grade) {
+                const baseParams = {
+                    workingMemorySpan: Math.min(7, 3 + Math.floor(age / 3)),
+                    attentionDuration: 180 + (age * 20),
+                    processingSpeed: Math.max(300, 1000 - (age * 40)),
+                    cognitiveFlexibility: 0.5 + (age * 0.03),
+                    inhibitionControl: 0.6 + (grade * 0.05),
+                    adaptiveRate: 0.15,
+                    difficultyFloor: 0.3,
+                    difficultyCeiling: 2.0
+                };
+                
+                // Apply individual differences based on performance history
+                if (state.history.length > 5) {
+                    const recent = state.history.slice(-5);
+                    const avgScore = recent.reduce((sum, h) => sum + (h.score || 0), 0) / recent.length;
+                    if (avgScore > 85) baseParams.adaptiveRate *= 1.2;
+                    if (avgScore < 60) baseParams.adaptiveRate *= 0.8;
+                }
+                
+                return baseParams;
+            }
+
+            function getPercentile(score, age, skillType) {
+                const norms = ageNorms[age] || ageNorms[12];
+                const thresholds = norms[skillType] || [50, 60, 70, 80, 90];
+                const percentiles = [10, 25, 50, 75, 90];
+                
+                for (let i = 0; i < thresholds.length; i++) {
+                    if (score < thresholds[i]) {
+                        return i === 0 ? percentiles[0] : 
+                               percentiles[i-1] + (score - thresholds[i-1]) * 
+                               (percentiles[i] - percentiles[i-1]) / (thresholds[i] - thresholds[i-1]);
+                    }
+                }
+                return 90 + Math.min(10, (score - thresholds[4]) / 2);
+            }
+
+            // Keyboard navigation
+            function setupKeyboardNav() {
+                addTrackedListener(document, 'keydown', (e) => {
+                    // Global shortcuts
+                    if (e.key === 'Escape' && gameModal.style.display === 'flex') {
+                        if (!state.isPaused) pauseGame();
+                        else if (confirm('Exit game? Progress will be lost.')) exitToMenu();
+                    }
+                    
+                    if (e.key === 'p' && gameModal.style.display === 'flex') {
+                        togglePause();
+                    }
+                    
+                    // Tab navigation enhancement
+                    if (e.key === 'Tab') {
+                        document.querySelectorAll('.game-card, .btn, .input-field').forEach(el => {
+                            if (!el.hasAttribute('tabindex') && !el.disabled) {
+                                el.setAttribute('tabindex', '0');
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Pause functionality
+            function togglePause() {
+                state.isPaused = !state.isPaused;
+                document.getElementById('pauseIndicator').classList.toggle('active', state.isPaused);
+                document.getElementById('pauseBtn').textContent = state.isPaused ? 'Resume' : 'Pause';
+                
+                if (state.isPaused) {
+                    state.activeIntervals.forEach(i => clearInterval(i));
+                    state.activeTimers.forEach(t => clearTimeout(t));
+                } else {
+                    if (state.currentGame) runTask();
+                }
+            }
+
+            function pauseGame() {
+                if (!state.isPaused) togglePause();
+            }
+
+            // Main app functions
+            async function startApp() {
+                performanceMonitor.start('login');
+                
+                let isValid = true;
+                [loginInputs.name, loginInputs.age, loginInputs.grade].forEach(input => {
+                    const isEmpty = !input.value.trim();
+                    input.classList.toggle('invalid', isEmpty);
+                    if (isEmpty) isValid = false;
+                });
+                
+                if (!isValid) {
+                    loginInputs.error.textContent = 'Please fill in all fields.';
                     return;
                 }
                 
-                const gameArea = this.container.querySelector('#game-area');
-                const current = this.sequence[this.position];
-                const isMatch = this.position >= this.n && 
-                               current === this.sequence[this.position - this.n];
+                const name = sanitizeInput(loginInputs.name.value, 'name');
+                const age = sanitizeInput(loginInputs.age.value, 'age');
+                const grade = loginInputs.grade.value;
                 
-                gameArea.innerHTML = `
-                    <div style="font-size: 5rem; margin-bottom: 2rem;">${current}</div>
-                    <div style="display: flex; gap: 1rem; justify-content: center;">
-                        <button class="btn" id="match">Match</button>
-                        <button class="btn btn--secondary" id="no-match">No Match</button>
+                if (!name || !age || !grade) {
+                    loginInputs.error.textContent = 'Invalid input. Please check your entries.';
+                    return;
+                }
+                
+                loginInputs.error.textContent = '';
+                loginInputs.submit.disabled = true;
+                
+                state.userProfile.name = name;
+                state.userProfile.age = age;
+                state.userProfile.adaptiveParams = calculateAdaptiveParams(age, parseInt(grade));
+
+                if (!isOffline) {
+                    const profileId = `${name.toLowerCase().replace(/\s+/g, '-')}-${age}-${Date.now()}`;
+                    state.userProfile.docRef = doc(db, `/artifacts/${appId}/users/${userId}/profiles/${profileId}`);
+                    
+                    const userDoc = await safeFirebaseOp(
+                        () => getDoc(state.userProfile.docRef),
+                        () => saveLocalState()
+                    );
+
+                    if (userDoc?.exists()) {
+                        const data = userDoc.data();
+                        state.userProfile.streak = data.streak || 0;
+                        state.userProfile.lastSession = data.lastSession?.toDate();
+                        state.userProfile.achievements = data.achievements || [];
+                        state.history = data.history || [];
+                    } else {
+                        await safeFirebaseOp(
+                            () => setDoc(state.userProfile.docRef, {
+                                name, age, grade, streak: 0, 
+                                lastSession: null, achievements: [], 
+                                history: [], created: serverTimestamp()
+                            }),
+                            () => saveLocalState()
+                        );
+                    }
+                }
+                
+                updateGamificationHeader();
+                screens.login.style.display = 'none';
+                screens.game.style.display = 'block';
+                showNotification(`Welcome, ${name}!`, 'success');
+                performanceMonitor.end('login');
+            }
+
+            function startGame(type) {
+                if (document.getElementById(`card-${type}`).classList.contains('completed') || state.clickLock) return;
+                lockClicks();
+                
+                cleanupResources();
+                state.cleanupCurrentGame();
+                state.cleanupCurrentGame = () => {};
+
+                state.currentGame = type;
+                state.currentTask = 0;
+                state.taskResults = [];
+                state.sessionStartTime = Date.now();
+                state.isPaused = false;
+                
+                gameModal.style.display = 'flex';
+                gameModal.focus();
+                
+                const titles = {
+                    memory: '🧩 Working Memory',
+                    attention: '🎯 Sustained Attention',
+                    flexibility: '🔄 Cognitive Flexibility',
+                    speed: '⚡ Processing Speed'
+                };
+                document.getElementById('gameTitle').textContent = titles[type];
+                document.getElementById('progressBar').setAttribute('aria-valuenow', '0');
+                
+                updateProgress();
+                runTask();
+            }
+
+            function runTask() {
+                if (state.isPaused) return;
+                
+                updateProgress();
+                const area = document.getElementById('gameArea');
+                area.innerHTML = '';
+                
+                const taskFunctions = {
+                    memory: runMemory,
+                    attention: runAttention,
+                    flexibility: runFlexibility,
+                    speed: runSpeed
+                };
+                
+                taskFunctions[state.currentGame]?.(area);
+            }
+
+            function runMemory(area) {
+                const params = state.userProfile.adaptiveParams;
+                const baseLength = params.workingMemorySpan;
+                const length = Math.min(9, baseLength + state.currentTask);
+                const sequence = Array.from({length}, () => Math.floor(Math.random() * 10));
+                const presentationSpeed = Math.max(400, 900 - (state.userProfile.age - 8) * 40);
+                
+                let userInput = [];
+                area.innerHTML = `
+                    <h3 style="text-align:center;">Remember the sequence</h3>
+                    <div class="sequence-indicator" id="seqDots"></div>
+                    <div class="stimulus-display" id="display">Ready...</div>
+                    <div id="inputArea" style="display:none;">
+                        <h3 style="text-align:center;">Enter the sequence</h3>
+                        <div class="input-display" id="slots"></div>
+                        <div class="number-grid" id="numberGrid"></div>
+                        <button id="clearBtn" class="btn btn-secondary" style="display:block;margin:16px auto;">Clear</button>
                     </div>
                 `;
                 
-                const startTime = performance.now();
+                // Use fragment for better performance
+                const dotsFragment = document.createDocumentFragment();
+                const slotsFragment = document.createDocumentFragment();
+                const gridFragment = document.createDocumentFragment();
                 
-                const handleResponse = (response) => {
-                    const rt = performance.now() - startTime;
-                    this.recordTrial({
-                        stimulus: current,
-                        response,
-                        correct: response === isMatch,
-                        rt
-                    });
+                for (let i = 0; i < length; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'sequence-dot';
+                    dot.id = `dot-${i}`;
+                    dotsFragment.appendChild(dot);
                     
-                    this.position++;
-                    setTimeout(() => this.presentStimulus(), 500);
+                    const slot = document.createElement('div');
+                    slot.className = 'input-slot';
+                    slot.id = `slot-${i}`;
+                    slotsFragment.appendChild(slot);
+                }
+                
+                for (let i = 0; i <= 9; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'number-btn';
+                    btn.dataset.num = i;
+                    btn.textContent = i;
+                    btn.setAttribute('aria-label', `Number ${i}`);
+                    gridFragment.appendChild(btn);
+                }
+                
+                document.getElementById('seqDots').appendChild(dotsFragment);
+                document.getElementById('slots').appendChild(slotsFragment);
+                document.getElementById('numberGrid').appendChild(gridFragment);
+                
+                const handleInput = (num) => {
+                    if (state.clickLock || userInput.length >= length || state.isPaused) return;
+                    lockClicks(100);
+                    
+                    userInput.push(num);
+                    const slot = document.getElementById(`slot-${userInput.length-1}`);
+                    if (slot) {
+                        slot.textContent = num;
+                        slot.classList.add('filled');
+                    }
+                    playSound(true);
+                    
+                    if (userInput.length === length) {
+                        const correct = userInput.reduce((sum, val, i) => sum + (val === sequence[i]), 0);
+                        const score = (correct / length) * 80 + (correct === length ? 20 : 0);
+                        state.taskResults.push(score);
+                        showQuickFeedback(area, correct === length);
+                        playSound(correct === length);
+                        
+                        const timer = setTimeout(nextTask, 1000);
+                        state.activeTimers.push(timer);
+                    }
                 };
                 
-                gameArea.querySelector('#match').addEventListener('click', () => handleResponse(true));
-                gameArea.querySelector('#no-match').addEventListener('click', () => handleResponse(false));
+                const gridClickHandler = (e) => {
+                    if (e.target.classList.contains('number-btn')) {
+                        handleInput(parseInt(e.target.dataset.num));
+                    }
+                };
                 
-                // Keyboard support
                 const keyHandler = (e) => {
-                    if (e.key === 'ArrowLeft') handleResponse(false);
-                    if (e.key === 'ArrowRight') handleResponse(true);
+                    if (e.key >= '0' && e.key <= '9') {
+                        handleInput(parseInt(e.key));
+                    }
                 };
-                document.addEventListener('keydown', keyHandler);
-                this.container.cleanup = () => document.removeEventListener('keydown', keyHandler);
-            }
-        }
-        
-        class CPTEngine extends GameEngine {
-            // Continuous Performance Task implementation
-            async init() {
-                super.init();
-                this.targets = 0;
-                this.hits = 0;
-                this.falseAlarms = 0;
-                this.container.querySelector('#game-title').textContent = 'Sustained Attention Task';
-            }
-            
-            start() {
-                this.presentSequence();
-            }
-            
-            presentSequence() {
-                const gameArea = this.container.querySelector('#game-area');
-                const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-                let trial = 0;
-                const maxTrials = 100;
                 
-                const present = () => {
-                    if (trial >= maxTrials) {
-                        this.container.endGame(this.trials);
+                addTrackedListener(document.getElementById('numberGrid'), 'click', gridClickHandler);
+                addTrackedListener(document, 'keydown', keyHandler);
+                
+                const clearBtn = document.getElementById('clearBtn');
+                addTrackedListener(clearBtn, 'click', () => {
+                    if (state.clickLock) return;
+                    lockClicks(100);
+                    userInput = [];
+                    document.querySelectorAll('.input-slot').forEach(s => {
+                        s.textContent = '';
+                        s.classList.remove('filled');
+                    });
+                });
+                
+                let showIdx = 0;
+                const presentationTimer = setTimeout(() => {
+                    const interval = setInterval(() => {
+                        if (state.isPaused) return;
+                        
+                        const prevDot = document.getElementById(`dot-${showIdx-1}`);
+                        if (prevDot) prevDot.classList.remove('active');
+                        
+                        if (showIdx < sequence.length) {
+                            document.getElementById('display').textContent = sequence[showIdx];
+                            const currentDot = document.getElementById(`dot-${showIdx}`);
+                            if (currentDot) currentDot.classList.add('active');
+                            showIdx++;
+                        } else {
+                            clearInterval(interval);
+                            document.getElementById('display').style.display = 'none';
+                            document.getElementById('seqDots').style.display = 'none';
+                            document.getElementById('inputArea').style.display = 'block';
+                        }
+                    }, presentationSpeed);
+                    state.activeIntervals.push(interval);
+                }, 1000);
+                state.activeTimers.push(presentationTimer);
+                
+                state.cleanupCurrentGame = () => cleanupResources();
+            }
+
+            function runAttention(area) {
+                let score = 0, hits = 0, misses = 0, falseAlarms = 0;
+                const params = state.userProfile.adaptiveParams;
+                const targets = 5 + Math.floor(state.currentTask * 1.5);
+                const distractors = 3 + state.currentTask;
+                const presentationTime = Math.max(800, params.attentionDuration * 6);
+                
+                area.innerHTML = `
+                    <h3 style="text-align:center;">Click blue circles only!</h3>
+                    <div class="target-area" id="targetArea"></div>
+                    <div style="text-align:center;margin-top:10px;">
+                        Score: <strong id="scoreDisplay">0</strong> | 
+                        Targets: <strong id="hitsDisplay">0</strong>/${targets}
+                    </div>
+                `;
+                
+                const targetArea = document.getElementById('targetArea');
+                let itemsCreated = 0;
+                let activeItems = [];
+                
+                const spawn = () => {
+                    if (state.isPaused) return;
+                    if (hits >= targets || itemsCreated >= targets + distractors) {
+                        endTask();
                         return;
                     }
                     
-                    const isTarget = Math.random() < 0.1; // 10% targets
-                    const letter = isTarget ? 'X' : letters[Math.floor(Math.random() * 25)];
+                    const isTarget = itemsCreated < targets && Math.random() < 0.7;
+                    const item = document.createElement('div');
+                    item.className = isTarget ? 'target' : 'distractor';
+                    item.style.left = `${Math.random() * 85}%`;
+                    item.style.top = `${Math.random() * 85}%`;
+                    item.setAttribute('role', 'button');
+                    item.setAttribute('aria-label', isTarget ? 'Target' : 'Distractor');
                     
-                    gameArea.innerHTML = `<div style="font-size: 5rem;">${letter}</div>`;
-                    
-                    const startTime = performance.now();
-                    let responded = false;
-                    
-                    const handleResponse = () => {
-                        if (responded) return;
-                        responded = true;
+                    const clickHandler = () => {
+                        if (state.clickLock || state.isPaused) return;
+                        lockClicks(50);
                         
-                        const rt = performance.now() - startTime;
                         if (isTarget) {
-                            this.hits++;
-                            this.recordTrial({ type: 'hit', rt });
+                            score += 15;
+                            hits++;
+                            playSound(true);
                         } else {
-                            this.falseAlarms++;
-                            this.recordTrial({ type: 'false_alarm', rt });
+                            score = Math.max(0, score - 10);
+                            falseAlarms++;
+                            playSound(false);
                         }
+                        
+                        document.getElementById('scoreDisplay').textContent = score;
+                        document.getElementById('hitsDisplay').textContent = hits;
+                        showQuickFeedback(targetArea, isTarget);
+                        
+                        item.remove();
+                        const idx = activeItems.indexOf(item);
+                        if (idx > -1) activeItems.splice(idx, 1);
+                        
+                        if (hits >= targets) endTask();
                     };
                     
-                    gameArea.addEventListener('click', handleResponse);
-                    document.addEventListener('keydown', (e) => {
-                        if (e.key === ' ') handleResponse();
-                    });
+                    addTrackedListener(item, 'click', clickHandler);
+                    targetArea.appendChild(item);
+                    activeItems.push(item);
+                    itemsCreated++;
                     
-                    setTimeout(() => {
-                        if (!responded && isTarget) {
-                            this.recordTrial({ type: 'miss' });
-                        } else if (!responded) {
-                            this.recordTrial({ type: 'correct_rejection' });
+                    const removeTimer = setTimeout(() => {
+                        if (activeItems.includes(item)) {
+                            if (isTarget) misses++;
+                            item.remove();
+                            activeItems.splice(activeItems.indexOf(item), 1);
+                        }
+                    }, presentationTime);
+                    state.activeTimers.push(removeTimer);
+                };
+                
+                const endTask = () => {
+                    clearInterval(spawnInterval);
+                    const accuracy = hits / (hits + misses + falseAlarms) || 0;
+                    const finalScore = score * accuracy;
+                    state.taskResults.push(Math.min(100, finalScore));
+                    const timer = setTimeout(nextTask, 1000);
+                    state.activeTimers.push(timer);
+                };
+                
+                const spawnInterval = setInterval(() => {
+                    if (!state.isPaused) spawn();
+                }, 700);
+                state.activeIntervals.push(spawnInterval);
+                
+                state.cleanupCurrentGame = () => {
+                    clearInterval(spawnInterval);
+                    cleanupResources();
+                };
+            }
+
+            function runFlexibility(area) {
+                let trial = 0, correct = 0;
+                const params = state.userProfile.adaptiveParams;
+                const rules = ['even', 'high', 'greater'];
+                const currentRule = rules[state.currentTask % rules.length];
+                const totalTrials = 8 + state.currentTask * 2;
+                
+                const nextTrial = () => {
+                    if (state.isPaused) return;
+                    if (trial >= totalTrials) {
+                        const score = Math.round((correct / totalTrials) * 100);
+                        state.taskResults.push(score);
+                        showQuickFeedback(area, score > 70);
+                        const timer = setTimeout(nextTask, 1000);
+                        state.activeTimers.push(timer);
+                        return;
+                    }
+                    
+                    const switchPoint = Math.floor(totalTrials / 2);
+                    const rule = trial < switchPoint ? currentRule : rules[(rules.indexOf(currentRule) + 1) % rules.length];
+                    const num1 = Math.floor(Math.random() * 10);
+                    const num2 = rule === 'greater' ? Math.floor(Math.random() * 10) : 0;
+                    
+                    area.innerHTML = `
+                        <h3 style="text-align:center;">Trial ${trial + 1}/${totalTrials}</h3>
+                        <h3 style="text-align:center;color:var(--primary);">
+                            ${rule === 'even' ? 'Is the number EVEN or ODD?' :
+                              rule === 'high' ? 'Is the number HIGH (≥5) or LOW (<5)?' :
+                              `Which is GREATER: ${num1} or ${num2}?`}
+                        </h3>
+                        <div class="stimulus-display">${rule === 'greater' ? `${num1} ? ${num2}` : num1}</div>
+                        <div id="flex-btns" style="display:flex;gap:20px;justify-content:center;"></div>
+                    `;
+                    
+                    const btnsContainer = document.getElementById('flex-btns');
+                    const options = rule === 'even' ? ['Even', 'Odd'] :
+                                   rule === 'high' ? ['High', 'Low'] :
+                                   [num1.toString(), num2.toString()];
+                    
+                    options.forEach(opt => {
+                        const btn = document.createElement('button');
+                        btn.className = 'btn';
+                        btn.textContent = opt;
+                        
+                        let isCorrect;
+                        if (rule === 'even') {
+                            isCorrect = (opt === 'Even' && num1 % 2 === 0) || (opt === 'Odd' && num1 % 2 !== 0);
+                        } else if (rule === 'high') {
+                            isCorrect = (opt === 'High' && num1 >= 5) || (opt === 'Low' && num1 < 5);
+                        } else {
+                            isCorrect = (opt === num1.toString() && num1 > num2) || (opt === num2.toString() && num2 > num1);
                         }
                         
-                        trial++;
-                        setTimeout(present, 500);
-                    }, 1500);
-                };
-                
-                present();
-            }
-        }
-        
-        class WCSTEngine extends GameEngine {
-            // Wisconsin Card Sorting Task
-            async init() {
-                super.init();
-                this.rules = ['color', 'shape', 'number'];
-                this.currentRule = this.rules[0];
-                this.switchAfter = 10;
-                this.correctStreak = 0;
-                this.container.querySelector('#game-title').textContent = 'Cognitive Flexibility Task';
-            }
-            
-            start() {
-                this.presentCards();
-            }
-            
-            presentCards() {
-                const colors = ['red', 'blue', 'green', 'yellow'];
-                const shapes = ['circle', 'square', 'triangle', 'star'];
-                const numbers = [1, 2, 3, 4];
-                
-                const targetCard = {
-                    color: colors[Math.floor(Math.random() * 4)],
-                    shape: shapes[Math.floor(Math.random() * 4)],
-                    number: numbers[Math.floor(Math.random() * 4)]
-                };
-                
-                const options = [];
-                for (let i = 0; i < 4; i++) {
-                    options.push({
-                        color: colors[i],
-                        shape: shapes[Math.floor(Math.random() * 4)],
-                        number: numbers[Math.floor(Math.random() * 4)]
-                    });
-                }
-                
-                const gameArea = this.container.querySelector('#game-area');
-                gameArea.innerHTML = `
-                    <div style="margin-bottom: 2rem;">
-                        <div style="display: inline-block; padding: 2rem; border: 2px solid var(--text);">
-                            ${this.renderCard(targetCard)}
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 1rem; justify-content: center;">
-                        ${options.map((card, i) => `
-                            <button class="card" data-index="${i}" style="padding: 1rem;">
-                                ${this.renderCard(card)}
-                            </button>
-                        `).join('')}
-                    </div>
-                `;
-                
-                const startTime = performance.now();
-                
-                gameArea.querySelectorAll('.card').forEach((btn, i) => {
-                    btn.addEventListener('click', () => {
-                        const rt = performance.now() - startTime;
-                        const selected = options[i];
-                        const correct = selected[this.currentRule] === targetCard[this.currentRule];
-                        
-                        this.recordTrial({
-                            rule: this.currentRule,
-                            correct,
-                            rt
+                        addTrackedListener(btn, 'click', () => {
+                            if (state.clickLock || state.isPaused) return;
+                            lockClicks(500);
+                            
+                            if (isCorrect) correct++;
+                            showQuickFeedback(area, isCorrect);
+                            playSound(isCorrect);
+                            trial++;
+                            
+                            const timer = setTimeout(nextTrial, 500);
+                            state.activeTimers.push(timer);
                         });
                         
-                        if (correct) {
-                            this.correctStreak++;
-                            if (this.correctStreak >= this.switchAfter) {
-                                this.currentRule = this.rules[(this.rules.indexOf(this.currentRule) + 1) % 3];
-                                this.correctStreak = 0;
+                        btnsContainer.appendChild(btn);
+                    });
+                };
+                
+                nextTrial();
+                state.cleanupCurrentGame = () => cleanupResources();
+            }
+
+            function runSpeed(area) {
+                let trial = 0, reactionTimes = [];
+                const params = state.userProfile.adaptiveParams;
+                const totalTrials = 6 + state.currentTask;
+                
+                const nextTrial = () => {
+                    if (state.isPaused) return;
+                    if (trial >= totalTrials) {
+                        const avgRT = reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length;
+                        const score = Math.max(0, Math.round(100 - (avgRT - params.processingSpeed) / 10));
+                        state.taskResults.push(Math.min(100, score));
+                        const timer = setTimeout(nextTask, 1000);
+                        state.activeTimers.push(timer);
+                        return;
+                    }
+                    
+                    const patterns = ['○●○', '□■□', '△▲△', '◆◈◆'];
+                    const colors = ['red', 'blue', 'green', 'yellow'];
+                    const useColor = Math.random() > 0.5;
+                    
+                    let correct, options;
+                    if (useColor) {
+                        correct = colors[Math.floor(Math.random() * colors.length)];
+                        options = colors;
+                        area.innerHTML = `
+                            <h3 style="text-align:center;">Trial ${trial + 1}/${totalTrials}</h3>
+                            <div style="font-size:48px;text-align:center;margin:24px;color:${correct};">COLOR</div>
+                            <p style="text-align:center;">What color is the text?</p>
+                            <div id="speed-btns" style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;"></div>
+                        `;
+                    } else {
+                        correct = patterns[Math.floor(Math.random() * patterns.length)];
+                        options = [...patterns].sort(() => Math.random() - 0.5);
+                        area.innerHTML = `
+                            <h3 style="text-align:center;">Trial ${trial + 1}/${totalTrials}</h3>
+                            <div style="font-size:48px;text-align:center;margin:24px;">${correct}</div>
+                            <p style="text-align:center;">Match the pattern</p>
+                            <div id="speed-btns" style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;"></div>
+                        `;
+                    }
+                    
+                    const startTime = performance.now();
+                    const btnsContainer = document.getElementById('speed-btns');
+                    
+                    options.forEach(opt => {
+                        const btn = document.createElement('button');
+                        btn.className = 'btn';
+                        btn.style.cssText = useColor ? `background:${opt};min-width:80px;` : 'font-size:28px;padding:16px;';
+                        btn.textContent = useColor ? opt : opt;
+                        
+                        addTrackedListener(btn, 'click', () => {
+                            if (state.clickLock || state.isPaused) return;
+                            lockClicks(500);
+                            
+                            const rt = performance.now() - startTime;
+                            const isCorrect = opt === correct;
+                            reactionTimes.push(isCorrect ? rt : rt * 1.5);
+                            showQuickFeedback(area, isCorrect);
+                            playSound(isCorrect);
+                            trial++;
+                            
+                            const timer = setTimeout(nextTrial, 500);
+                            state.activeTimers.push(timer);
+                        });
+                        
+                        btnsContainer.appendChild(btn);
+                    });
+                    
+                    // Keyboard support for speed task
+                    if (options.length <= 4) {
+                        const keyMap = ['1', '2', '3', '4'];
+                        const keyHandler = (e) => {
+                            const idx = keyMap.indexOf(e.key);
+                            if (idx >= 0 && idx < options.length) {
+                                btnsContainer.children[idx]?.click();
                             }
-                        } else {
-                            this.correctStreak = 0;
-                        }
-                        
-                        if (this.trials.length < 60) {
-                            setTimeout(() => this.presentCards(), 500);
-                        } else {
-                            this.container.endGame(this.trials);
-                        }
-                    });
-                });
-            }
-            
-            renderCard(card) {
-                const shapes = {
-                    circle: '●',
-                    square: '■',
-                    triangle: '▲',
-                    star: '★'
+                        };
+                        addTrackedListener(document, 'keydown', keyHandler);
+                    }
                 };
                 
-                return `<div style="color: ${card.color}; font-size: 2rem;">
-                    ${shapes[card.shape].repeat(card.number)}
-                </div>`;
+                nextTrial();
+                state.cleanupCurrentGame = () => cleanupResources();
             }
-        }
-        
-        class StroopEngine extends GameEngine {
-            async init() {
-                super.init();
-                this.container.querySelector('#game-title').textContent = 'Processing Speed Task';
+
+            function nextTask() {
+                state.currentTask++;
+                document.getElementById('progressBar').setAttribute('aria-valuenow', state.currentTask.toString());
+                if (state.currentTask < 3) runTask();
+                else endGame();
             }
-            
-            start() {
-                this.presentStimulus();
-            }
-            
-            presentStimulus() {
-                const colors = ['red', 'blue', 'green', 'yellow'];
-                const word = colors[Math.floor(Math.random() * 4)];
-                const color = colors[Math.floor(Math.random() * 4)];
-                const isCongruent = word === color;
+
+            async function endGame() {
+                cleanupResources();
+                state.cleanupCurrentGame();
+                state.cleanupCurrentGame = () => {};
                 
-                const gameArea = this.container.querySelector('#game-area');
-                gameArea.innerHTML = `
-                    <div style="font-size: 4rem; color: ${color}; margin-bottom: 2rem;">
-                        ${word.toUpperCase()}
-                    </div>
-                    <div>What color is the text?</div>
-                    <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
-                        ${colors.map(c => `
-                            <button class="btn" data-color="${c}" 
-                                    style="background: ${c}; min-width: 100px;">
-                                ${c}
-                            </button>
-                        `).join('')}
-                    </div>
-                `;
+                const avg = Math.round(state.taskResults.reduce((a, b) => a + b, 0) / state.taskResults.length);
+                const percentile = Math.round(getPercentile(avg, state.userProfile.age, state.currentGame));
                 
-                const startTime = performance.now();
+                state.sessionScores[state.currentGame] = avg;
                 
-                gameArea.querySelectorAll('.btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const rt = performance.now() - startTime;
-                        const selected = btn.dataset.color;
-                        
-                        this.recordTrial({
-                            word,
-                            color,
-                            congruent: isCongruent,
-                            response: selected,
-                            correct: selected === color,
-                            rt
-                        });
-                        
-                        if (this.trials.length < 40) {
-                            setTimeout(() => this.presentStimulus(), 250);
-                        } else {
-                            this.container.endGame(this.trials);
-                        }
-                    });
-                });
-            }
-        }
-        
-        class NeuralReport extends HTMLElement {
-            connectedCallback() {
-                this.render();
-            }
-            
-            render() {
-                const user = stateManager.state.user;
-                const history = stateManager.state.history;
-                const recentSession = history[history.length - 1];
-                
-                const stats = this.calculateStats(history);
-                
-                this.innerHTML = `
-                    <div style="max-width: 900px; margin: 0 auto;">
-                        <h2 style="text-align: center; margin-bottom: 2rem;">
-                            Executive Function Report
-                        </h2>
-                        
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-                                    gap: 1rem; margin-bottom: 2rem;">
-                            <div class="card" style="text-align: center;">
-                                <div style="font-size: 3rem;">${stats.averageScore}</div>
-                                <div>Average Score</div>
-                            </div>
-                            <div class="card" style="text-align: center;">
-                                <div style="font-size: 3rem;">${stats.sessionsCompleted}</div>
-                                <div>Sessions</div>
-                            </div>
-                            <div class="card" style="text-align: center;">
-                                <div style="font-size: 3rem;">${stats.streak}</div>
-                                <div>Day Streak</div>
-                            </div>
-                            <div class="card" style="text-align: center;">
-                                <div style="font-size: 3rem;">${stats.improvement}%</div>
-                                <div>Improvement</div>
-                            </div>
-                        </div>
-                        
-                        ${recentSession ? `
-                            <div class="card" style="margin-bottom: 2rem;">
-                                <h3>Most Recent Session</h3>
-                                <p>Game: ${recentSession.gameId}</p>
-                                <p>Score: ${recentSession.score}</p>
-                                <p>Level: ${recentSession.level}</p>
-                                <p>Duration: ${Math.round(recentSession.duration / 1000)}s</p>
-                            </div>
-                        ` : ''}
-                        
-                        <div style="text-align: center;">
-                            <button class="btn" id="export-data">Export Data (CSV)</button>
-                            <button class="btn btn--secondary" id="back-dashboard">
-                                Back to Dashboard
-                            </button>
-                        </div>
-                    </div>
-                `;
-                
-                this.querySelector('#export-data').addEventListener('click', () => this.exportData());
-                this.querySelector('#back-dashboard').addEventListener('click', () => {
-                    document.querySelector('neural-router').navigate('dashboard');
-                });
-            }
-            
-            calculateStats(history) {
-                const scores = history.map(h => h.score);
-                const average = scores.length ? 
-                    Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
-                
-                const dates = [...new Set(history.map(h => 
-                    new Date(h.date).toDateString()
-                ))];
-                
-                const firstScores = history.slice(0, 5).map(h => h.score);
-                const recentScores = history.slice(-5).map(h => h.score);
-                const firstAvg = firstScores.length ? 
-                    firstScores.reduce((a, b) => a + b, 0) / firstScores.length : 0;
-                const recentAvg = recentScores.length ? 
-                    recentScores.reduce((a, b) => a + b, 0) / recentScores.length : 0;
-                const improvement = firstAvg ? 
-                    Math.round(((recentAvg - firstAvg) / firstAvg) * 100) : 0;
-                
-                return {
-                    averageScore: average,
-                    sessionsCompleted: history.length,
-                    streak: this.calculateStreak(dates),
-                    improvement: improvement
-                };
-            }
-            
-            calculateStreak(dates) {
-                if (!dates.length) return 0;
-                
-                let streak = 1;
-                for (let i = dates.length - 1; i > 0; i--) {
-                    const current = new Date(dates[i]);
-                    const prev = new Date(dates[i - 1]);
-                    const dayDiff = Math.round((current - prev) / 86400000);
-                    
-                    if (dayDiff === 1) streak++;
-                    else break;
+                // Check for achievements
+                if (avg >= 90) {
+                    const achKey = `${state.currentGame}_90`;
+                    if (!state.userProfile.achievements.includes(achKey)) {
+                        state.userProfile.achievements.push(achKey);
+                        showNotification(`🏆 Achievement: ${achievementsList[achKey].name}!`, 'success');
+                    }
                 }
                 
-                return streak;
+                if (avg === 100 && !state.userProfile.achievements.includes('perfect_session')) {
+                    state.userProfile.achievements.push('perfect_session');
+                    showNotification('🏆 Achievement: Perfect Session!', 'success');
+                }
+                
+                document.getElementById(`score-${state.currentGame}`).innerHTML = `Score: ${avg} <small>(${percentile}%ile)</small>`;
+                document.getElementById(`score-${state.currentGame}`).style.display = 'block';
+                document.getElementById(`card-${state.currentGame}`).classList.add('completed');
+                document.getElementById(`sidebar-score-${state.currentGame}`).textContent = avg;
+                document.getElementById(`sidebar-${state.currentGame}`).classList.add('completed');
+                
+                gameModal.style.display = 'none';
+                
+                if (Object.values(state.sessionScores).every(s => s !== null)) {
+                    if (!state.userProfile.achievements.includes('all_complete')) {
+                        state.userProfile.achievements.push('all_complete');
+                        showNotification('🏆 Achievement: All Tasks Complete!', 'success');
+                    }
+                    const timer = setTimeout(processEndSession, 500);
+                    state.activeTimers.push(timer);
+                }
+                
+                // Update performance indicator
+                updatePerformanceIndicator();
             }
-            
-            exportData() {
-                const history = stateManager.state.history;
+
+            async function processEndSession() {
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+                
+                // Calculate streak
+                if (state.userProfile.lastSession) {
+                    const lastDate = new Date(state.userProfile.lastSession);
+                    const daysSince = Math.floor((today - lastDate) / 86400000);
+                    
+                    if (daysSince === 0) {
+                        // Same day, streak unchanged
+                    } else if (daysSince === 1) {
+                        state.userProfile.streak++;
+                    } else {
+                        state.userProfile.streak = 1;
+                    }
+                } else {
+                    state.userProfile.streak = 1;
+                }
+                
+                state.userProfile.lastSession = today;
+                
+                // Check streak achievements
+                if (state.userProfile.streak >= 3 && !state.userProfile.achievements.includes('streak_3')) {
+                    state.userProfile.achievements.push('streak_3');
+                    showNotification('🏆 Achievement: 3 Day Streak!', 'success');
+                }
+                if (state.userProfile.streak >= 7 && !state.userProfile.achievements.includes('streak_7')) {
+                    state.userProfile.achievements.push('streak_7');
+                    showNotification('🏆 Achievement: Week Warrior!', 'success');
+                }
+                
+                // Check improvement
+                if (state.history.length >= 5) {
+                    const oldScores = state.history.slice(0, 5).map(h => h.scores);
+                    const oldAvg = oldScores.reduce((sum, s) => 
+                        sum + Object.values(s).reduce((a, b) => a + b, 0) / 4, 0) / 5;
+                    const currentAvg = Object.values(state.sessionScores).reduce((a, b) => a + b, 0) / 4;
+                    
+                    if (currentAvg > oldAvg * 1.2 && !state.userProfile.achievements.includes('improvement_20')) {
+                        state.userProfile.achievements.push('improvement_20');
+                        showNotification('🏆 Achievement: 20% Improvement!', 'success');
+                    }
+                }
+                
+                if (!state.userProfile.achievements.includes('first_session')) {
+                    state.userProfile.achievements.push('first_session');
+                    showNotification('🏆 Achievement: First Session Complete!', 'success');
+                }
+                
+                const sessionData = {
+                    date: now.toISOString(),
+                    scores: {...state.sessionScores},
+                    duration: Date.now() - state.sessionStartTime,
+                    age: state.userProfile.age
+                };
+                
+                state.history.push(sessionData);
+                
+                // Save to Firebase or local storage
+                await safeFirebaseOp(
+                    () => updateDoc(state.userProfile.docRef, {
+                        streak: state.userProfile.streak,
+                        lastSession: state.userProfile.lastSession,
+                        achievements: state.userProfile.achievements,
+                        history: state.history
+                    }),
+                    () => saveLocalState()
+                );
+                
+                showReport();
+            }
+
+            function showReport() {
+                screens.game.style.display = 'none';
+                screens.report.style.display = 'block';
+                
+                document.getElementById('studentName').textContent = state.userProfile.name;
+                document.getElementById('studentAge').textContent = state.userProfile.age;
+                document.getElementById('reportDate').textContent = new Date().toLocaleDateString();
+                
+                const skills = [
+                    { key: 'memory', name: 'Working Memory', icon: '🧩' },
+                    { key: 'attention', name: 'Sustained Attention', icon: '🎯' },
+                    { key: 'flexibility', name: 'Cognitive Flexibility', icon: '🔄' },
+                    { key: 'speed', name: 'Processing Speed', icon: '⚡' }
+                ];
+                
+                let total = 0;
+                let lowest = { key: null, score: 101 };
+                const currentScores = state.sessionScores;
+                
+                document.getElementById('reportScores').innerHTML = skills.map(skill => {
+                    const score = currentScores[skill.key] || 0;
+                    const percentile = Math.round(getPercentile(score, state.userProfile.age, skill.key));
+                    
+                    if (score < lowest.score) {
+                        lowest = { key: skill.key, name: skill.name, icon: skill.icon, score };
+                    }
+                    
+                    const grade = score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : score >= 60 ? 'D' : 'F';
+                    const points = Math.round(score * 1.5);
+                    total += points;
+                    
+                    return `
+                        <div class="report-score-item">
+                            <div style="font-size:40px;">${skill.icon}</div>
+                            <div style="font-weight:600;">${skill.name}</div>
+                            <div class="report-grade grade-${grade}">${grade}</div>
+                            <div style="color:var(--gray-500);">${score}%</div>
+                            <div class="percentile">${percentile}th percentile for age ${state.userProfile.age}</div>
+                            <div style="color:var(--primary);font-weight:600;">+${points} pts</div>
+                        </div>
+                    `;
+                }).join('');
+                
+                document.getElementById('totalScore').textContent = total;
+                state.lowestSkill = lowest;
+                
+                if (lowest.key) {
+                    const tips = {
+                        memory: 'Practice chunking (grouping items), use visualization and stories to link items, try the Method of Loci technique.',
+                        attention: 'Use the Pomodoro Technique, minimize distractions, practice mindfulness meditation for 5-10 minutes daily.',
+                        flexibility: 'Play strategy games, learn a new skill, practice switching between different homework subjects.',
+                        speed: 'Use flashcards with a timer, play reaction-based games, practice reading with a finger guide.'
+                    };
+                    
+                    document.getElementById('recommendations').innerHTML = `
+                        <div class="skill-tip">
+                            <h4>${lowest.icon} Focus Area: ${lowest.name}</h4>
+                            <p><strong>Your Score:</strong> ${lowest.score}% (${Math.round(getPercentile(lowest.score, state.userProfile.age, lowest.key))}th percentile)</p>
+                            <p><strong>Tips:</strong> ${tips[lowest.key]}</p>
+                            <p><strong>Goal:</strong> Try to improve by 10% over the next week!</p>
+                        </div>
+                    `;
+                    
+                    document.getElementById('focusModeBtn').style.display = 'inline-block';
+                }
+                
+                // Show progress chart
+                if (state.history.length > 0) {
+                    document.getElementById('progressChart').style.display = 'block';
+                    const chartArea = document.getElementById('chart-area');
+                    chartArea.innerHTML = '';
+                    
+                    skills.forEach(skill => {
+                        const score = currentScores[skill.key] || 0;
+                        const barGroup = document.createElement('div');
+                        barGroup.className = 'chart-bar-group';
+                        barGroup.innerHTML = `
+                            <div class="chart-bar" style="height:${score}%;">${score}</div>
+                            <div class="chart-label">${skill.name.split(' ')[0]}</div>
+                        `;
+                        chartArea.appendChild(barGroup);
+                    });
+                }
+                
+                // Show achievements
+                if (state.userProfile.achievements.length > 0) {
+                    document.getElementById('achievements').style.display = 'block';
+                    const grid = document.getElementById('achievements-grid');
+                    grid.innerHTML = '';
+                    
+                    Object.entries(achievementsList).forEach(([id, ach]) => {
+                        const unlocked = state.userProfile.achievements.includes(id);
+                        const badge = document.createElement('div');
+                        badge.className = `achievement-badge ${unlocked ? 'unlocked' : ''}`;
+                        badge.setAttribute('title', ach.description);
+                        badge.innerHTML = `
+                            <div class="badge-icon">${ach.icon}</div>
+                            <div class="badge-name">${ach.name}</div>
+                        `;
+                        grid.appendChild(badge);
+                    });
+                }
+                
+                updateGamificationHeader();
+            }
+
+            function updateGamificationHeader() {
+                const header = document.getElementById('gamification-header');
+                if (state.userProfile.name) {
+                    header.style.display = 'flex';
+                    document.getElementById('streak-count').textContent = state.userProfile.streak;
+                    document.getElementById('achievement-count').textContent = 
+                        `${state.userProfile.achievements.length}/${Object.keys(achievementsList).length}`;
+                }
+            }
+
+            function updatePerformanceIndicator() {
+                const fps = state.performanceData.fps;
+                const indicator = document.getElementById('performance-indicator');
+                if (indicator) {
+                    const health = fps >= 50 ? 100 : fps >= 30 ? 75 : 50;
+                    indicator.textContent = `${health}%`;
+                    indicator.style.color = health >= 75 ? 'var(--success)' : 'var(--warning)';
+                }
+            }
+
+            function exportData() {
+                const data = {
+                    profile: {
+                        name: state.userProfile.name,
+                        age: state.userProfile.age,
+                        streak: state.userProfile.streak,
+                        achievements: state.userProfile.achievements
+                    },
+                    sessions: state.history,
+                    exported: new Date().toISOString()
+                };
+                
                 const csv = [
-                    ['Date', 'Game', 'Score', 'Level', 'Duration'],
-                    ...history.map(h => [
-                        new Date(h.date).toISOString(),
-                        h.gameId,
-                        h.score,
-                        h.level || '',
-                        h.duration || ''
+                    ['Date', 'Memory', 'Attention', 'Flexibility', 'Speed', 'Age'],
+                    ...state.history.map(h => [
+                        new Date(h.date).toLocaleDateString(),
+                        h.scores.memory || '',
+                        h.scores.attention || '',
+                        h.scores.flexibility || '',
+                        h.scores.speed || '',
+                        h.age || state.userProfile.age
                     ])
                 ].map(row => row.join(',')).join('\n');
                 
@@ -1269,36 +1251,161 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `neural-flow-data-${Date.now()}.csv`;
+                a.download = `neural-flow-${state.userProfile.name}-${Date.now()}.csv`;
                 a.click();
                 URL.revokeObjectURL(url);
+                
+                showNotification('Data exported successfully!', 'success');
             }
-        }
-        
-        // Register all custom elements
-        customElements.define('neural-stats', NeuralStats);
-        customElements.define('neural-router', NeuralRouter);
-        customElements.define('neural-login', NeuralLogin);
-        customElements.define('neural-dashboard', NeuralDashboard);
-        customElements.define('neural-game', NeuralGame);
-        customElements.define('neural-report', NeuralReport);
-        
-        // Initialize animations
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideIn {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
+
+            function focusMode() {
+                if (state.lowestSkill?.key) {
+                    screens.report.style.display = 'none';
+                    screens.game.style.display = 'block';
+                    
+                    const type = state.lowestSkill.key;
+                    state.sessionScores[type] = null;
+                    
+                    ['card', 'sidebar'].forEach(prefix => {
+                        const el = document.getElementById(`${prefix}-${type}`);
+                        if (el) el.classList.remove('completed');
+                    });
+                    
+                    document.getElementById(`score-${type}`).style.display = 'none';
+                    document.getElementById(`sidebar-score-${type}`).textContent = '—';
+                    
+                    showNotification(`Focus Mode: Practicing ${state.lowestSkill.name}`, 'info');
+                    startGame(type);
+                }
             }
-            @keyframes slideOut {
-                from { transform: translateX(0); opacity: 1; }
-                to { transform: translateX(100%); opacity: 0; }
+
+            function resetApp() {
+                if (!confirm('Reset all progress? This cannot be undone.')) return;
+                
+                cleanupResources();
+                state = {
+                    userProfile: { name: '', age: 12, docRef: null, streak: 0, lastSession: null, achievements: [], adaptiveParams: {} },
+                    sessionScores: { memory: null, attention: null, flexibility: null, speed: null },
+                    history: [],
+                    currentGame: null,
+                    currentTask: 0,
+                    taskResults: [],
+                    clickLock: false,
+                    lowestSkill: null,
+                    isPaused: false,
+                    sessionStartTime: null,
+                    activeListeners: [],
+                    activeTimers: [],
+                    activeIntervals: [],
+                    pendingOperations: [],
+                    performanceData: { fps: 60, latency: 0 },
+                    cleanupCurrentGame: () => {}
+                };
+                
+                localStorage.removeItem('neural-flow-state');
+                localStorage.removeItem('neural-flow-pending');
+                
+                document.querySelectorAll('.game-card').forEach(c => c.classList.remove('completed'));
+                document.querySelectorAll('.game-score').forEach(s => s.style.display = 'none');
+                document.querySelectorAll('.score-value').forEach(s => s.textContent = '—');
+                document.querySelectorAll('.score-item').forEach(i => i.classList.remove('completed'));
+                
+                loginInputs.name.value = '';
+                loginInputs.age.value = '';
+                loginInputs.grade.value = '';
+                loginInputs.submit.disabled = false;
+                
+                updateGamificationHeader();
+                screens.report.style.display = 'none';
+                screens.game.style.display = 'none';
+                screens.login.style.display = 'block';
+                
+                showNotification('App reset successfully', 'info');
             }
-        `;
-        document.head.appendChild(style);
-        
-        // Initialize app
-        console.log('Neural Flow v3 initialized');
-    </script>
-</body>
-</html>
+
+            function lockClicks(duration = 300) {
+                state.clickLock = true;
+                const timer = setTimeout(() => { state.clickLock = false; }, duration);
+                state.activeTimers.push(timer);
+            }
+
+            function showQuickFeedback(container, success) {
+                const feedback = document.createElement('div');
+                feedback.className = `quick-feedback ${success ? 'success' : 'error'}`;
+                feedback.textContent = success ? '✓' : '✗';
+                container.appendChild(feedback);
+                const timer = setTimeout(() => feedback.remove(), 800);
+                state.activeTimers.push(timer);
+            }
+
+            function updateProgress() {
+                const bar = document.getElementById('progressBar');
+                bar.innerHTML = '';
+                for (let i = 0; i < 3; i++) {
+                    const segment = document.createElement('div');
+                    segment.className = 'progress-segment';
+                    if (i < state.currentTask) segment.classList.add('completed');
+                    else if (i === state.currentTask) segment.classList.add('active');
+                    bar.appendChild(segment);
+                }
+                bar.setAttribute('aria-valuenow', state.currentTask.toString());
+            }
+
+            function exitToMenu() {
+                cleanupResources();
+                state.cleanupCurrentGame();
+                state.cleanupCurrentGame = () => {};
+                state.isPaused = false;
+                gameModal.style.display = 'none';
+            }
+
+            // Initialize app
+            function init() {
+                performanceMonitor.start('init');
+                
+                // Load pending operations
+                try {
+                    const pending = localStorage.getItem('neural-flow-pending');
+                    if (pending) state.pendingOperations = JSON.parse(pending);
+                } catch(e) {}
+                
+                // Setup screens
+                document.getElementById('loginScreen').innerHTML = `
+                    <h2 class="login-title">Welcome!</h2>
+                    <p>Evidence-based executive function training</p>
+                    <div class="input-group">
+                        <label for="nameInput" class="input-label">First Name</label>
+                        <input type="text" class="input-field" id="nameInput" placeholder="Enter your first name" 
+                               autocomplete="given-name" maxlength="50">
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="ageInput" class="input-label">Age</label>
+                            <input type="number" class="input-field" id="ageInput" placeholder="Your age" 
+                                   min="6" max="18" autocomplete="age">
+                        </div>
+                        <div class="input-group">
+                            <label for="gradeInput" class="input-label">Grade</label>
+                            <select class="input-field" id="gradeInput">
+                                <option value="">Select Grade</option>
+                                ${[3,4,5,6,7,8,9,10,11,12].map(g => `<option value="${g}">${g}th Grade</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <div id="loginError" class="error-message" role="alert" aria-live="assertive"></div>
+                    <button id="startBtn" class="btn" style="width: 100%; margin-top: 20px;">Begin Training</button>
+                `;
+                
+                document.getElementById('gameScreen').innerHTML = `
+                    <h2>Complete All 4 Training Modules</h2>
+                    <div class="game-layout">
+                        <div>
+                            <div class="game-grid">
+                                ${[
+                                    { id: 'memory', icon: '🧩', title: 'Working Memory', desc: 'Remember sequences' },
+                                    { id: 'attention', icon: '🎯', title: 'Sustained Attention', desc: 'Focus on targets' },
+                                    { id: 'flexibility', icon: '🔄', title: 'Cognitive Flexibility', desc: 'Switch between rules' },
+                                    { id: 'speed', icon: '⚡', title: 'Processing Speed', desc: 'Quick decisions' }
+                                ].map(g => `
+                                    <div class="game-card" id="card-${g.id}" data-game-type="${g.id}" 
+                                         role="button" tabindex="0" aria-label="${g.title}:
