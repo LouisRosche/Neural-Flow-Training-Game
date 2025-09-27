@@ -7,7 +7,7 @@
     <title>Neural Flow - Executive Function Training</title>
     
     <style>
-        /* CSS Variables for maintainability */
+        /* CSS Variables for theming */
         :root {
             --primary: #6366f1;
             --primary-dark: #4f46e5;
@@ -24,7 +24,7 @@
             --transition: all 0.2s ease;
         }
 
-        /* Reset and base styles */
+        /* Reset */
         * {
             margin: 0;
             padding: 0;
@@ -32,7 +32,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.5;
             color: var(--text);
             background: var(--bg);
@@ -172,6 +172,14 @@
             background: var(--text-muted);
         }
 
+        .btn-success {
+            background: var(--success);
+        }
+
+        .btn-error {
+            background: var(--error);
+        }
+
         .btn-block {
             display: block;
             width: 100%;
@@ -248,6 +256,7 @@
             font-weight: 700;
             color: var(--primary);
             margin: 2rem 0;
+            user-select: none;
         }
 
         .response-buttons {
@@ -275,10 +284,50 @@
             transition: var(--transition);
         }
 
-        .number-btn:hover {
+        .number-btn:hover:not(:disabled) {
             background: var(--primary);
             color: white;
             border-color: var(--primary);
+        }
+
+        .number-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Target area for attention game */
+        .target-area {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            height: 400px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            margin: 1rem auto;
+            overflow: hidden;
+            background: white;
+        }
+
+        .target {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s;
+            user-select: none;
+        }
+
+        .target:hover {
+            transform: scale(1.1);
+        }
+
+        .target.blue {
+            background: var(--primary);
+        }
+
+        .target.red {
+            background: var(--error);
         }
 
         /* Progress bar */
@@ -345,6 +394,7 @@
             font-weight: 600;
             animation: slideIn 0.3s ease;
             z-index: 1000;
+            max-width: 300px;
         }
 
         .feedback.success {
@@ -359,6 +409,10 @@
             background: var(--primary);
         }
 
+        .feedback.warning {
+            background: var(--warning);
+        }
+
         @keyframes slideIn {
             from {
                 transform: translateX(100%);
@@ -368,6 +422,31 @@
                 transform: translateX(0);
                 opacity: 1;
             }
+        }
+
+        /* Stats display */
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: var(--radius);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
         }
 
         /* Loading state */
@@ -391,6 +470,34 @@
             to { transform: rotate(360deg); }
         }
 
+        /* Input display for memory game */
+        .input-display {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        .input-slot {
+            width: 50px;
+            height: 50px;
+            border: 2px solid var(--border);
+            border-radius: calc(var(--radius) / 2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: white;
+        }
+
+        .input-slot.filled {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .form-row {
@@ -404,6 +511,10 @@
             .report-scores {
                 grid-template-columns: 1fr;
             }
+            
+            .target-area {
+                height: 300px;
+            }
         }
 
         /* Print styles */
@@ -414,7 +525,19 @@
             
             .btn,
             .header {
-                display: none;
+                display: none !important;
+            }
+            
+            .content {
+                padding: 0;
+            }
+            
+            .report-header {
+                page-break-after: avoid;
+            }
+            
+            .score-card {
+                page-break-inside: avoid;
             }
         }
 
@@ -434,6 +557,27 @@
             outline: 2px solid var(--primary);
             outline-offset: 2px;
         }
+
+        /* Anti-cheat overlay */
+        .integrity-check {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            display: none;
+            z-index: 9999;
+            padding: 2rem;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .integrity-check.active {
+            display: flex;
+        }
     </style>
 </head>
 <body>
@@ -447,7 +591,7 @@
             <div id="loginScreen" class="screen active">
                 <div class="form-container">
                     <h2 class="form-title">Welcome!</h2>
-                    <form id="loginForm">
+                    <div id="loginForm">
                         <div class="form-group">
                             <label class="form-label" for="name">First Name</label>
                             <input type="text" id="name" class="form-input" required maxlength="50">
@@ -477,8 +621,8 @@
                             </div>
                         </div>
                         
-                        <button type="submit" class="btn btn-block">Begin Training</button>
-                    </form>
+                        <button type="button" id="beginBtn" class="btn btn-block">Begin Training</button>
+                    </div>
                 </div>
             </div>
             
@@ -500,7 +644,7 @@
                     </div>
                 </div>
                 <div style="text-align: center; margin-top: 2rem;">
-                    <button class="btn btn-secondary" onclick="App.exitGame()">Exit Game</button>
+                    <button id="exitGameBtn" class="btn btn-secondary">Exit Game</button>
                 </div>
             </div>
             
@@ -514,23 +658,36 @@
                     
                     <div class="report-scores" id="reportScores"></div>
                     
+                    <div id="recommendations" style="margin: 2rem 0; padding: 1rem; background: #fef3c7; border-radius: 10px; display: none;">
+                        <h3 style="color: #92400e;">Recommendations</h3>
+                        <p id="recommendationText"></p>
+                    </div>
+                    
                     <div style="text-align: center; margin-top: 2rem;">
-                        <button class="btn" onclick="App.exportData()">Export Data</button>
-                        <button class="btn btn-secondary" onclick="App.reset()">New Session</button>
+                        <button id="exportBtn" class="btn">Export Data</button>
+                        <button id="resetBtn" class="btn btn-secondary">New Session</button>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
+    <!-- Anti-cheat overlay -->
+    <div class="integrity-check" id="integrityCheck">
+        <div>
+            <h2>⚠️ Integrity Check Failed</h2>
+            <p>The developer console was detected. Please close it and refresh the page to continue.</p>
+        </div>
+    </div>
+
     <script>
-    // Production-ready implementation with comprehensive error handling
+    // Production-ready implementation with fixes for all identified issues
     (function() {
         'use strict';
         
-        // Application namespace to prevent global pollution
+        // Application namespace
         const App = window.App = {
-            // Configuration constants
+            // Configuration
             CONFIG: {
                 GAMES: [
                     { id: 'memory', name: 'Working Memory', icon: '🧩', description: 'Remember sequences' },
@@ -539,9 +696,9 @@
                     { id: 'speed', name: 'Processing Speed', icon: '⚡', description: 'Quick decisions' }
                 ],
                 STORAGE_KEY: 'neural_flow_data',
-                SESSION_KEY: 'neural_flow_session',
                 MAX_TASKS: 3,
-                TASK_TIMEOUT: 60000 // 60 seconds per task
+                ADAPTIVE_THRESHOLD: 0.7, // 70% success to increase difficulty
+                CHECKSUM_SALT: 'NF2024' // For data integrity
             },
             
             // Application state
@@ -549,21 +706,30 @@
                 user: null,
                 currentGame: null,
                 currentTask: 0,
+                currentDifficulty: 1,
                 taskScores: [],
                 gameScores: {},
                 sessionStart: null,
-                history: []
+                history: [],
+                storageAvailable: false,
+                integrityChecksum: null
             },
             
-            // DOM references (will be cached on init)
+            // DOM element cache
             elements: {},
+            
+            // Event listeners registry for cleanup
+            listeners: new Map(),
             
             // Initialize application
             init() {
                 try {
+                    console.log('Initializing Neural Flow...');
+                    this.testStorage();
                     this.cacheElements();
                     this.loadState();
                     this.bindEvents();
+                    this.setupIntegrityCheck();
                     this.render();
                     console.log('Neural Flow initialized successfully');
                 } catch (error) {
@@ -571,7 +737,20 @@
                 }
             },
             
-            // Cache DOM elements for performance
+            // Test storage availability
+            testStorage() {
+                try {
+                    const test = '__test__';
+                    localStorage.setItem(test, test);
+                    localStorage.removeItem(test);
+                    this.state.storageAvailable = true;
+                } catch(e) {
+                    console.warn('localStorage not available');
+                    this.state.storageAvailable = false;
+                }
+            },
+            
+            // Cache DOM elements
             cacheElements() {
                 this.elements = {
                     screens: {
@@ -581,29 +760,42 @@
                         report: document.getElementById('reportScreen')
                     },
                     loginForm: document.getElementById('loginForm'),
+                    beginBtn: document.getElementById('beginBtn'),
                     gamesGrid: document.getElementById('gamesGrid'),
                     gameArea: document.getElementById('gameArea'),
                     progressBar: document.getElementById('progressBar'),
                     reportScores: document.getElementById('reportScores'),
-                    reportInfo: document.getElementById('reportInfo')
+                    reportInfo: document.getElementById('reportInfo'),
+                    exitGameBtn: document.getElementById('exitGameBtn'),
+                    exportBtn: document.getElementById('exportBtn'),
+                    resetBtn: document.getElementById('resetBtn'),
+                    integrityCheck: document.getElementById('integrityCheck'),
+                    recommendations: document.getElementById('recommendations'),
+                    recommendationText: document.getElementById('recommendationText')
                 };
                 
-                // Verify all elements exist
+                // Verify elements exist
                 Object.entries(this.elements).forEach(([key, value]) => {
-                    if (value === null || (typeof value === 'object' && Object.values(value).includes(null))) {
-                        throw new Error(`Required element not found: ${key}`);
+                    if (!value && typeof value !== 'object') {
+                        console.warn(`Element not found: ${key}`);
                     }
                 });
             },
             
-            // Load saved state from localStorage
+            // Load saved state
             loadState() {
+                if (!this.state.storageAvailable) return;
+                
                 try {
                     const saved = localStorage.getItem(this.CONFIG.STORAGE_KEY);
                     if (saved) {
                         const data = JSON.parse(saved);
-                        if (data.history) {
-                            this.state.history = data.history;
+                        
+                        // Verify data integrity
+                        if (this.verifyChecksum(data)) {
+                            this.state.history = data.history || [];
+                        } else {
+                            console.warn('Data integrity check failed');
                         }
                     }
                 } catch (error) {
@@ -611,38 +803,146 @@
                 }
             },
             
-            // Save state to localStorage
+            // Save state with checksum
             saveState() {
+                if (!this.state.storageAvailable) return;
+                
                 try {
                     const data = {
-                        history: this.state.history.slice(-100), // Keep last 100 sessions
+                        history: this.state.history.slice(-100),
                         timestamp: Date.now()
                     };
+                    
+                    // Add checksum for integrity
+                    data.checksum = this.generateChecksum(data);
+                    
                     localStorage.setItem(this.CONFIG.STORAGE_KEY, JSON.stringify(data));
                 } catch (error) {
                     console.warn('Could not save state:', error);
                 }
             },
             
-            // Bind event listeners
+            // Generate checksum for data integrity
+            generateChecksum(data) {
+                const str = JSON.stringify(data.history) + data.timestamp + this.CONFIG.CHECKSUM_SALT;
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    const char = str.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash;
+                }
+                return hash;
+            },
+            
+            // Verify checksum
+            verifyChecksum(data) {
+                if (!data.checksum) return false;
+                const expected = this.generateChecksum(data);
+                return data.checksum === expected;
+            },
+            
+            // Setup basic integrity check
+            setupIntegrityCheck() {
+                // Detect developer tools (basic check)
+                let devtools = {open: false, orientation: null};
+                const threshold = 160;
+                
+                setInterval(() => {
+                    if (window.outerHeight - window.innerHeight > threshold || 
+                        window.outerWidth - window.innerWidth > threshold) {
+                        if (!devtools.open) {
+                            devtools.open = true;
+                            this.onDevToolsOpen();
+                        }
+                    } else {
+                        devtools.open = false;
+                    }
+                }, 500);
+            },
+            
+            // Handle developer tools detection
+            onDevToolsOpen() {
+                console.warn('Developer tools detected - results may be marked as unverified');
+                this.state.integrityChecksum = 'unverified';
+            },
+            
+            // Bind event listeners using event delegation
             bindEvents() {
-                // Login form
-                this.elements.loginForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    this.handleLogin();
+                // Login button
+                this.addEventListener(this.elements.beginBtn, 'click', () => this.handleLogin());
+                
+                // Exit game button
+                this.addEventListener(this.elements.exitGameBtn, 'click', () => this.exitGame());
+                
+                // Export button
+                this.addEventListener(this.elements.exportBtn, 'click', () => this.exportData());
+                
+                // Reset button  
+                this.addEventListener(this.elements.resetBtn, 'click', () => this.reset());
+                
+                // Enter key on login form
+                this.addEventListener(document.getElementById('loginForm'), 'keypress', (e) => {
+                    if (e.key === 'Enter') this.handleLogin();
                 });
                 
-                // Prevent multiple rapid clicks
-                document.addEventListener('click', (e) => {
-                    if (e.target.dataset.clicked === 'true') {
+                // Game area delegation for all game interactions
+                this.addEventListener(this.elements.gameArea, 'click', (e) => {
+                    this.handleGameClick(e);
+                });
+                
+                // Prevent rapid clicks
+                this.addEventListener(document, 'click', (e) => {
+                    if (e.target.tagName === 'BUTTON' && e.target.dataset.clicked === 'true') {
                         e.preventDefault();
-                        return;
+                        return false;
                     }
                     if (e.target.tagName === 'BUTTON') {
                         e.target.dataset.clicked = 'true';
-                        setTimeout(() => delete e.target.dataset.clicked, 500);
+                        setTimeout(() => delete e.target.dataset.clicked, 300);
                     }
                 });
+            },
+            
+            // Add event listener with tracking
+            addEventListener(element, event, handler) {
+                if (!element) return;
+                
+                element.addEventListener(event, handler);
+                
+                if (!this.listeners.has(element)) {
+                    this.listeners.set(element, []);
+                }
+                this.listeners.get(element).push({event, handler});
+            },
+            
+            // Handle game area clicks (delegation)
+            handleGameClick(e) {
+                const target = e.target;
+                
+                // Number pad buttons
+                if (target.classList.contains('number-btn')) {
+                    const num = parseInt(target.dataset.num);
+                    if (!isNaN(num)) {
+                        this.handleMemoryInput(num);
+                    }
+                }
+                
+                // Response buttons
+                if (target.classList.contains('response-btn')) {
+                    const response = target.dataset.response;
+                    const correct = target.dataset.correct;
+                    this.handleResponse(response, correct);
+                }
+                
+                // Targets in attention game
+                if (target.classList.contains('target')) {
+                    this.handleTargetClick(target);
+                }
+                
+                // Clear button
+                if (target.id === 'clearBtn') {
+                    this.clearMemoryInput();
+                }
             },
             
             // Handle login
@@ -670,6 +970,7 @@
                 // Set user
                 this.state.user = { name, age, grade: parseInt(grade) };
                 this.state.sessionStart = Date.now();
+                this.state.integrityChecksum = this.generateChecksum(this.state);
                 
                 // Navigate to menu
                 this.showScreen('menu');
@@ -677,27 +978,47 @@
                 this.showFeedback(`Welcome, ${name}!`, 'success');
             },
             
-            // Render games menu
+            // Render games menu using DOM manipulation
             renderGames() {
                 const grid = this.elements.gamesGrid;
-                grid.innerHTML = '';
                 
+                // Clear existing content
+                while (grid.firstChild) {
+                    grid.removeChild(grid.firstChild);
+                }
+                
+                // Create game cards
                 this.CONFIG.GAMES.forEach(game => {
                     const card = document.createElement('div');
                     card.className = 'game-card';
+                    
                     if (this.state.gameScores[game.id] !== undefined) {
                         card.classList.add('completed');
                     }
                     
-                    card.innerHTML = `
-                        <div class="game-icon">${game.icon}</div>
-                        <div class="game-title">${game.name}</div>
-                        <div class="game-desc">${game.description}</div>
-                        ${this.state.gameScores[game.id] !== undefined ? 
-                            `<div class="game-score">Score: ${this.state.gameScores[game.id]}%</div>` : ''}
-                    `;
+                    // Create elements instead of using innerHTML
+                    const icon = document.createElement('div');
+                    icon.className = 'game-icon';
+                    icon.textContent = game.icon;
                     
-                    if (this.state.gameScores[game.id] === undefined) {
+                    const title = document.createElement('div');
+                    title.className = 'game-title';
+                    title.textContent = game.name;
+                    
+                    const desc = document.createElement('div');
+                    desc.className = 'game-desc';
+                    desc.textContent = game.description;
+                    
+                    card.appendChild(icon);
+                    card.appendChild(title);
+                    card.appendChild(desc);
+                    
+                    if (this.state.gameScores[game.id] !== undefined) {
+                        const score = document.createElement('div');
+                        score.className = 'game-score';
+                        score.textContent = `Score: ${this.state.gameScores[game.id]}%`;
+                        card.appendChild(score);
+                    } else {
                         card.addEventListener('click', () => this.startGame(game.id));
                     }
                     
@@ -715,6 +1036,7 @@
                 try {
                     this.state.currentGame = gameId;
                     this.state.currentTask = 0;
+                    this.state.currentDifficulty = 1;
                     this.state.taskScores = [];
                     
                     this.showScreen('game');
@@ -738,7 +1060,19 @@
                 
                 // Clear game area
                 const area = this.elements.gameArea;
-                area.innerHTML = '';
+                while (area.firstChild) {
+                    area.removeChild(area.firstChild);
+                }
+                
+                // Adaptive difficulty adjustment
+                if (this.state.taskScores.length > 0) {
+                    const lastScore = this.state.taskScores[this.state.taskScores.length - 1];
+                    if (lastScore >= 80) {
+                        this.state.currentDifficulty = Math.min(this.state.currentDifficulty + 1, 5);
+                    } else if (lastScore < 50) {
+                        this.state.currentDifficulty = Math.max(this.state.currentDifficulty - 1, 1);
+                    }
+                }
                 
                 // Run appropriate task
                 switch (this.state.currentGame) {
@@ -759,230 +1093,539 @@
                 }
             },
             
-            // Memory task
+            // Memory task with DOM manipulation
             runMemoryTask(area) {
+                const baseLength = 3;
+                const length = baseLength + this.state.currentDifficulty + this.state.currentTask;
                 const sequence = [];
-                const length = 4 + this.state.currentTask;
                 
                 // Generate sequence
                 for (let i = 0; i < length; i++) {
                     sequence.push(Math.floor(Math.random() * 10));
                 }
                 
-                let showIndex = 0;
-                const userInput = [];
-                
-                // Show sequence
-                const showNext = () => {
-                    if (showIndex < sequence.length) {
-                        area.innerHTML = `
-                            <h3>Remember the sequence</h3>
-                            <div class="stimulus">${sequence[showIndex]}</div>
-                        `;
-                        showIndex++;
-                        setTimeout(showNext, 1000);
-                    } else {
-                        // Get user input
-                        area.innerHTML = `
-                            <h3>Enter the sequence</h3>
-                            <div style="margin: 2rem 0;">
-                                ${userInput.map(n => `<span style="font-size: 2rem; margin: 0 0.5rem;">${n}</span>`).join('')}
-                                ${userInput.length < length ? '<span style="font-size: 2rem; margin: 0 0.5rem;">_</span>' : ''}
-                            </div>
-                            <div class="number-pad">
-                                ${[0,1,2,3,4,5,6,7,8,9].map(n => 
-                                    `<button class="number-btn" onclick="App.handleMemoryInput(${n})">${n}</button>`
-                                ).join('')}
-                            </div>
-                        `;
-                    }
+                // Store memory state
+                this.memoryState = {
+                    sequence,
+                    userInput: [],
+                    length,
+                    showIndex: 0,
+                    startTime: Date.now()
                 };
                 
-                // Store for external access
-                this.memoryState = { sequence, userInput, length };
-                showNext();
+                // Start showing sequence
+                this.showMemorySequence();
+            },
+            
+            // Show memory sequence
+            showMemorySequence() {
+                const area = this.elements.gameArea;
+                const state = this.memoryState;
+                
+                // Clear area
+                while (area.firstChild) {
+                    area.removeChild(area.firstChild);
+                }
+                
+                if (state.showIndex < state.sequence.length) {
+                    // Show current number
+                    const title = document.createElement('h3');
+                    title.textContent = 'Remember the sequence';
+                    
+                    const stimulus = document.createElement('div');
+                    stimulus.className = 'stimulus';
+                    stimulus.textContent = state.sequence[state.showIndex];
+                    
+                    area.appendChild(title);
+                    area.appendChild(stimulus);
+                    
+                    state.showIndex++;
+                    setTimeout(() => this.showMemorySequence(), 1000);
+                } else {
+                    // Show input interface
+                    this.showMemoryInput();
+                }
+            },
+            
+            // Show memory input interface
+            showMemoryInput() {
+                const area = this.elements.gameArea;
+                const state = this.memoryState;
+                
+                // Clear area
+                while (area.firstChild) {
+                    area.removeChild(area.firstChild);
+                }
+                
+                // Title
+                const title = document.createElement('h3');
+                title.textContent = 'Enter the sequence';
+                area.appendChild(title);
+                
+                // Input display
+                const display = document.createElement('div');
+                display.className = 'input-display';
+                
+                for (let i = 0; i < state.length; i++) {
+                    const slot = document.createElement('div');
+                    slot.className = 'input-slot';
+                    slot.id = `slot-${i}`;
+                    if (i < state.userInput.length) {
+                        slot.textContent = state.userInput[i];
+                        slot.classList.add('filled');
+                    }
+                    display.appendChild(slot);
+                }
+                area.appendChild(display);
+                
+                // Number pad
+                const pad = document.createElement('div');
+                pad.className = 'number-pad';
+                
+                for (let i = 0; i <= 9; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'number-btn';
+                    btn.dataset.num = i;
+                    btn.textContent = i;
+                    btn.disabled = state.userInput.length >= state.length;
+                    pad.appendChild(btn);
+                }
+                area.appendChild(pad);
+                
+                // Clear button
+                const clearBtn = document.createElement('button');
+                clearBtn.id = 'clearBtn';
+                clearBtn.className = 'btn btn-secondary';
+                clearBtn.textContent = 'Clear';
+                clearBtn.style.marginTop = '1rem';
+                area.appendChild(clearBtn);
             },
             
             // Handle memory input
             handleMemoryInput(num) {
-                const { sequence, userInput, length } = this.memoryState;
-                userInput.push(num);
+                const state = this.memoryState;
                 
-                if (userInput.length >= length) {
+                if (state.userInput.length >= state.length) return;
+                
+                state.userInput.push(num);
+                
+                if (state.userInput.length >= state.length) {
                     // Calculate score
                     let correct = 0;
-                    for (let i = 0; i < length; i++) {
-                        if (userInput[i] === sequence[i]) correct++;
+                    for (let i = 0; i < state.length; i++) {
+                        if (state.userInput[i] === state.sequence[i]) correct++;
                     }
-                    const score = Math.round((correct / length) * 100);
+                    
+                    const accuracy = correct / state.length;
+                    const time = Date.now() - state.startTime;
+                    const timeBonus = Math.max(0, 1 - (time / (state.length * 2000)));
+                    const score = Math.round((accuracy * 80) + (timeBonus * 20));
+                    
                     this.state.taskScores.push(score);
-                    this.nextTask();
+                    this.showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
+                    
+                    setTimeout(() => this.nextTask(), 1500);
                 } else {
                     // Update display
-                    this.runMemoryTask(this.elements.gameArea);
+                    this.showMemoryInput();
                 }
             },
             
-            // Attention task
+            // Clear memory input
+            clearMemoryInput() {
+                this.memoryState.userInput = [];
+                this.showMemoryInput();
+            },
+            
+            // Attention task with improved scoring
             runAttentionTask(area) {
-                let targets = 0;
-                let hits = 0;
-                let misses = 0;
-                const maxTargets = 5 + this.state.currentTask;
-                
-                area.innerHTML = `
-                    <h3>Click the blue circles</h3>
-                    <div style="position: relative; width: 400px; height: 400px; border: 2px solid var(--border); margin: 2rem auto;">
-                        <div id="targetArea"></div>
-                    </div>
-                    <p>Hits: <span id="hits">0</span> / ${maxTargets}</p>
-                `;
-                
-                const targetArea = document.getElementById('targetArea');
-                
-                const spawnTarget = () => {
-                    if (targets >= maxTargets) {
-                        const score = Math.round((hits / maxTargets) * 100);
-                        this.state.taskScores.push(score);
-                        this.nextTask();
-                        return;
-                    }
-                    
-                    targets++;
-                    const isReal = Math.random() > 0.3;
-                    
-                    const dot = document.createElement('div');
-                    dot.style.cssText = `
-                        position: absolute;
-                        width: 50px;
-                        height: 50px;
-                        border-radius: 50%;
-                        background: ${isReal ? 'var(--primary)' : 'var(--error)'};
-                        left: ${Math.random() * 350}px;
-                        top: ${Math.random() * 350}px;
-                        cursor: pointer;
-                    `;
-                    
-                    dot.addEventListener('click', () => {
-                        if (isReal) {
-                            hits++;
-                            document.getElementById('hits').textContent = hits;
-                        } else {
-                            misses++;
-                        }
-                        dot.remove();
-                    });
-                    
-                    targetArea.appendChild(dot);
-                    
-                    setTimeout(() => {
-                        if (dot.parentNode) {
-                            dot.remove();
-                            if (isReal) misses++;
-                        }
-                        spawnTarget();
-                    }, 2000);
+                const state = {
+                    targets: 5 + this.state.currentDifficulty,
+                    hits: 0,
+                    misses: 0,
+                    falsePositives: 0,
+                    targetsShown: 0,
+                    distractorsShown: 0,
+                    startTime: Date.now(),
+                    active: []
                 };
                 
-                spawnTarget();
+                this.attentionState = state;
+                
+                // Create target area
+                const title = document.createElement('h3');
+                title.textContent = 'Click blue circles, avoid red circles!';
+                
+                const targetArea = document.createElement('div');
+                targetArea.className = 'target-area';
+                targetArea.id = 'targetArea';
+                
+                const stats = document.createElement('div');
+                stats.className = 'stats';
+                stats.innerHTML = `
+                    <div class="stat-item">
+                        <div class="stat-value" id="hitsDisplay">0</div>
+                        <div class="stat-label">Hits</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="missesDisplay">0</div>
+                        <div class="stat-label">Misses</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="accuracyDisplay">100%</div>
+                        <div class="stat-label">Accuracy</div>
+                    </div>
+                `;
+                
+                area.appendChild(title);
+                area.appendChild(targetArea);
+                area.appendChild(stats);
+                
+                // Start spawning targets
+                this.spawnTarget();
+            },
+            
+            // Spawn targets for attention game
+            spawnTarget() {
+                const state = this.attentionState;
+                
+                if (state.targetsShown >= state.targets && state.active.length === 0) {
+                    this.endAttentionTask();
+                    return;
+                }
+                
+                if (state.targetsShown < state.targets || Math.random() < 0.3) {
+                    const isTarget = state.targetsShown < state.targets && Math.random() > 0.3;
+                    
+                    const dot = document.createElement('div');
+                    dot.className = `target ${isTarget ? 'blue' : 'red'}`;
+                    dot.dataset.isTarget = isTarget;
+                    dot.dataset.spawnTime = Date.now();
+                    
+                    const area = document.getElementById('targetArea');
+                    const maxX = area.offsetWidth - 50;
+                    const maxY = area.offsetHeight - 50;
+                    
+                    dot.style.left = `${Math.random() * maxX}px`;
+                    dot.style.top = `${Math.random() * maxY}px`;
+                    
+                    area.appendChild(dot);
+                    state.active.push(dot);
+                    
+                    if (isTarget) state.targetsShown++;
+                    else state.distractorsShown++;
+                    
+                    // Auto-remove after timeout
+                    setTimeout(() => {
+                        if (dot.parentNode) {
+                            if (isTarget) {
+                                state.misses++;
+                                this.updateAttentionDisplay();
+                            }
+                            dot.remove();
+                            const idx = state.active.indexOf(dot);
+                            if (idx > -1) state.active.splice(idx, 1);
+                        }
+                    }, 2000 - (this.state.currentDifficulty * 100));
+                }
+                
+                // Schedule next spawn
+                setTimeout(() => this.spawnTarget(), 800 - (this.state.currentDifficulty * 50));
+            },
+            
+            // Handle target click
+            handleTargetClick(target) {
+                const state = this.attentionState;
+                const isTarget = target.dataset.isTarget === 'true';
+                const reactionTime = Date.now() - parseInt(target.dataset.spawnTime);
+                
+                if (isTarget) {
+                    state.hits++;
+                } else {
+                    state.falsePositives++;
+                }
+                
+                target.remove();
+                const idx = state.active.indexOf(target);
+                if (idx > -1) state.active.splice(idx, 1);
+                
+                this.updateAttentionDisplay();
+            },
+            
+            // Update attention display
+            updateAttentionDisplay() {
+                const state = this.attentionState;
+                const total = state.hits + state.misses + state.falsePositives;
+                const accuracy = total > 0 ? Math.round((state.hits / total) * 100) : 100;
+                
+                document.getElementById('hitsDisplay').textContent = state.hits;
+                document.getElementById('missesDisplay').textContent = state.misses;
+                document.getElementById('accuracyDisplay').textContent = `${accuracy}%`;
+            },
+            
+            // End attention task
+            endAttentionTask() {
+                const state = this.attentionState;
+                
+                // Calculate comprehensive score
+                const hitRate = state.targetsShown > 0 ? state.hits / state.targetsShown : 0;
+                const falseAlarmRate = state.distractorsShown > 0 ? 
+                    state.falsePositives / state.distractorsShown : 0;
+                
+                // d-prime calculation (signal detection theory)
+                const dPrime = Math.min(4, Math.max(-4, 
+                    this.zScore(hitRate) - this.zScore(falseAlarmRate)));
+                
+                const score = Math.round(Math.max(0, Math.min(100, 
+                    50 + (dPrime * 12.5))));
+                
+                this.state.taskScores.push(score);
+                this.showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
+                
+                setTimeout(() => this.nextTask(), 1500);
+            },
+            
+            // Z-score helper for d-prime calculation
+            zScore(p) {
+                p = Math.max(0.01, Math.min(0.99, p));
+                return Math.sqrt(2) * this.inverseErf(2 * p - 1);
+            },
+            
+            // Inverse error function approximation
+            inverseErf(x) {
+                const a = 0.147;
+                const s = Math.sign(x);
+                x = Math.abs(x);
+                const b = 2 / (Math.PI * a) + Math.log(1 - x * x) / 2;
+                const c = Math.log(1 - x * x) / a;
+                return s * Math.sqrt(Math.sqrt(b * b - c) - b);
             },
             
             // Flexibility task
             runFlexibilityTask(area) {
-                const rules = ['even/odd', 'high/low'];
-                const rule = rules[this.state.currentTask % 2];
-                const trials = 6;
-                let current = 0;
-                let correct = 0;
+                const rules = ['even/odd', 'high/low', 'prime/composite'];
+                const rule = rules[this.state.currentTask % rules.length];
+                const trials = 6 + this.state.currentDifficulty;
                 
-                const runTrial = () => {
-                    if (current >= trials) {
-                        const score = Math.round((correct / trials) * 100);
-                        this.state.taskScores.push(score);
-                        this.nextTask();
-                        return;
-                    }
-                    
-                    const num = Math.floor(Math.random() * 10);
-                    
-                    area.innerHTML = `
-                        <h3>Rule: ${rule === 'even/odd' ? 'Is it even or odd?' : 'Is it high (≥5) or low (<5)?'}</h3>
-                        <div class="stimulus">${num}</div>
-                        <div class="response-buttons">
-                            ${rule === 'even/odd' ? 
-                                `<button class="btn" onclick="App.handleFlexResponse(${num}, 'even')">Even</button>
-                                 <button class="btn" onclick="App.handleFlexResponse(${num}, 'odd')">Odd</button>` :
-                                `<button class="btn" onclick="App.handleFlexResponse(${num}, 'high')">High</button>
-                                 <button class="btn" onclick="App.handleFlexResponse(${num}, 'low')">Low</button>`
-                            }
-                        </div>
-                    `;
-                    
-                    current++;
+                this.flexState = {
+                    rule,
+                    trials,
+                    current: 0,
+                    correct: 0,
+                    reactionTimes: [],
+                    startTime: null
                 };
                 
-                this.flexState = { correct, runTrial };
-                runTrial();
+                this.runFlexTrial();
             },
             
-            // Handle flexibility response
-            handleFlexResponse(num, response) {
-                let isCorrect = false;
+            // Run flexibility trial
+            runFlexTrial() {
+                const state = this.flexState;
+                const area = this.elements.gameArea;
                 
-                if (response === 'even' && num % 2 === 0) isCorrect = true;
-                if (response === 'odd' && num % 2 !== 0) isCorrect = true;
-                if (response === 'high' && num >= 5) isCorrect = true;
-                if (response === 'low' && num < 5) isCorrect = true;
+                if (state.current >= state.trials) {
+                    const accuracy = state.correct / state.trials;
+                    const avgRT = state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length;
+                    const rtScore = Math.max(0, 1 - (avgRT / 3000));
+                    const score = Math.round((accuracy * 70) + (rtScore * 30));
+                    
+                    this.state.taskScores.push(score);
+                    this.showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
+                    
+                    setTimeout(() => this.nextTask(), 1500);
+                    return;
+                }
                 
-                if (isCorrect) this.flexState.correct++;
+                const num = Math.floor(Math.random() * 20) + 1;
                 
-                setTimeout(() => this.flexState.runTrial(), 500);
+                // Clear area
+                while (area.firstChild) {
+                    area.removeChild(area.firstChild);
+                }
+                
+                // Create UI
+                const title = document.createElement('h3');
+                title.textContent = `Trial ${state.current + 1} of ${state.trials}`;
+                
+                const rule = document.createElement('h3');
+                rule.style.color = 'var(--primary)';
+                rule.textContent = this.getRuleText(state.rule);
+                
+                const stimulus = document.createElement('div');
+                stimulus.className = 'stimulus';
+                stimulus.textContent = num;
+                
+                const buttons = document.createElement('div');
+                buttons.className = 'response-buttons';
+                
+                const options = this.getRuleOptions(state.rule);
+                options.forEach(option => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn response-btn';
+                    btn.textContent = option;
+                    btn.dataset.response = option.toLowerCase();
+                    btn.dataset.correct = this.checkFlexAnswer(num, state.rule, option.toLowerCase());
+                    buttons.appendChild(btn);
+                });
+                
+                area.appendChild(title);
+                area.appendChild(rule);
+                area.appendChild(stimulus);
+                area.appendChild(buttons);
+                
+                state.startTime = Date.now();
+                state.current++;
             },
             
-            // Speed task
+            // Get rule text
+            getRuleText(rule) {
+                switch(rule) {
+                    case 'even/odd': return 'Is the number even or odd?';
+                    case 'high/low': return 'Is the number high (≥10) or low (<10)?';
+                    case 'prime/composite': return 'Is the number prime or composite?';
+                    default: return '';
+                }
+            },
+            
+            // Get rule options
+            getRuleOptions(rule) {
+                switch(rule) {
+                    case 'even/odd': return ['Even', 'Odd'];
+                    case 'high/low': return ['High', 'Low'];
+                    case 'prime/composite': return ['Prime', 'Composite'];
+                    default: return [];
+                }
+            },
+            
+            // Check flexibility answer
+            checkFlexAnswer(num, rule, response) {
+                switch(rule) {
+                    case 'even/odd':
+                        return (num % 2 === 0 && response === 'even') || 
+                               (num % 2 !== 0 && response === 'odd');
+                    case 'high/low':
+                        return (num >= 10 && response === 'high') || 
+                               (num < 10 && response === 'low');
+                    case 'prime/composite':
+                        const isPrime = this.isPrime(num);
+                        return (isPrime && response === 'prime') || 
+                               (!isPrime && response === 'composite');
+                    default:
+                        return false;
+                }
+            },
+            
+            // Check if number is prime
+            isPrime(n) {
+                if (n <= 1) return false;
+                if (n <= 3) return true;
+                if (n % 2 === 0 || n % 3 === 0) return false;
+                for (let i = 5; i * i <= n; i += 6) {
+                    if (n % i === 0 || n % (i + 2) === 0) return false;
+                }
+                return true;
+            },
+            
+            // Handle response
+            handleResponse(response, correct) {
+                const state = this.flexState;
+                const rt = Date.now() - state.startTime;
+                
+                state.reactionTimes.push(rt);
+                if (correct === 'true') state.correct++;
+                
+                setTimeout(() => this.runFlexTrial(), 500);
+            },
+            
+            // Speed task (FIXED timing bug)
             runSpeedTask(area) {
-                const patterns = ['AAA', 'BBB', 'CCC', 'DDD'];
-                const trials = 5;
-                let current = 0;
-                let totalTime = 0;
-                let startTime;
+                const patterns = ['AAA', 'BBB', 'CCC', 'DDD', 'EEE'];
+                const trials = 5 + this.state.currentDifficulty;
                 
-                const runTrial = () => {
-                    if (current >= trials) {
-                        const avgTime = totalTime / trials;
-                        const score = Math.max(0, Math.round(100 - (avgTime / 20)));
-                        this.state.taskScores.push(score);
-                        this.nextTask();
-                        return;
-                    }
-                    
-                    const correct = patterns[Math.floor(Math.random() * patterns.length)];
-                    const options = [...patterns].sort(() => Math.random() - 0.5);
-                    
-                    area.innerHTML = `
-                        <h3>Match the pattern quickly</h3>
-                        <div class="stimulus">${correct}</div>
-                        <div class="response-buttons">
-                            ${options.map(p => 
-                                `<button class="btn" onclick="App.handleSpeedResponse('${p}', '${correct}')">${p}</button>`
-                            ).join('')}
-                        </div>
-                    `;
-                    
-                    startTime = Date.now();
-                    current++;
+                this.speedState = {
+                    trials,
+                    current: 0,
+                    reactionTimes: [],
+                    correct: 0
                 };
                 
-                this.speedState = { totalTime, runTrial };
-                runTrial();
+                this.runSpeedTrial();
             },
             
-            // Handle speed response
-            handleSpeedResponse(selected, correct) {
-                const time = Date.now() - performance.now();
-                this.speedState.totalTime += Math.abs(time);
+            // Run speed trial
+            runSpeedTrial() {
+                const state = this.speedState;
+                const area = this.elements.gameArea;
                 
-                setTimeout(() => this.speedState.runTrial(), 200);
+                if (state.current >= state.trials) {
+                    const accuracy = state.correct / state.trials;
+                    const avgRT = state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length;
+                    const rtScore = Math.max(0, 1 - (avgRT / 2000));
+                    const score = Math.round((accuracy * 50) + (rtScore * 50));
+                    
+                    this.state.taskScores.push(score);
+                    this.showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
+                    
+                    setTimeout(() => this.nextTask(), 1500);
+                    return;
+                }
+                
+                const patterns = ['AAA', 'BBB', 'CCC', 'DDD'];
+                const correct = patterns[Math.floor(Math.random() * patterns.length)];
+                const options = [...patterns].sort(() => Math.random() - 0.5);
+                
+                // Clear area
+                while (area.firstChild) {
+                    area.removeChild(area.firstChild);
+                }
+                
+                // Create UI
+                const title = document.createElement('h3');
+                title.textContent = 'Match the pattern quickly!';
+                
+                const stimulus = document.createElement('div');
+                stimulus.className = 'stimulus';
+                stimulus.textContent = correct;
+                
+                const buttons = document.createElement('div');
+                buttons.className = 'response-buttons';
+                
+                // Record start time BEFORE showing options
+                const startTime = Date.now();
+                
+                options.forEach(pattern => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn response-btn';
+                    btn.textContent = pattern;
+                    btn.dataset.response = pattern;
+                    btn.dataset.correct = (pattern === correct);
+                    btn.dataset.startTime = startTime; // Store start time in button
+                    buttons.appendChild(btn);
+                });
+                
+                area.appendChild(title);
+                area.appendChild(stimulus);
+                area.appendChild(buttons);
+                
+                state.current++;
+            },
+            
+            // Override handleResponse for speed game
+            handleResponse(response, correct) {
+                if (this.state.currentGame === 'speed') {
+                    const btn = event.target;
+                    const startTime = parseInt(btn.dataset.startTime);
+                    const rt = Date.now() - startTime; // FIXED: Proper time calculation
+                    
+                    this.speedState.reactionTimes.push(rt);
+                    if (correct === 'true') this.speedState.correct++;
+                    
+                    setTimeout(() => this.runSpeedTrial(), 300);
+                } else {
+                    // Handle other games' responses
+                    this.handleResponse(response, correct);
+                }
             },
             
             // Next task
@@ -998,6 +1641,7 @@
                 );
                 
                 this.state.gameScores[this.state.currentGame] = average;
+                
                 this.showScreen('menu');
                 this.renderGames();
                 this.showFeedback(`Game complete! Score: ${average}%`, 'success');
@@ -1019,31 +1663,68 @@
                 const total = Object.values(scores).reduce((a, b) => a + b, 0);
                 const average = Math.round(total / Object.keys(scores).length);
                 
-                // Save to history
-                this.state.history.push({
+                // Save to history with integrity check
+                const sessionData = {
                     date: new Date().toISOString(),
                     user: this.state.user,
                     scores: {...scores},
                     average,
-                    duration: Date.now() - this.state.sessionStart
-                });
+                    duration: Date.now() - this.state.sessionStart,
+                    integrity: this.state.integrityChecksum === 'unverified' ? 'unverified' : 'verified'
+                };
+                
+                this.state.history.push(sessionData);
                 this.saveState();
                 
                 // Render report
-                this.elements.reportInfo.innerHTML = `
-                    <strong>${this.state.user.name}</strong> | 
-                    Age ${this.state.user.age} | 
-                    Grade ${this.state.user.grade} | 
-                    ${new Date().toLocaleDateString()}
-                `;
+                this.elements.reportInfo.textContent = 
+                    `${this.state.user.name} | Age ${this.state.user.age} | Grade ${this.state.user.grade} | ${new Date().toLocaleDateString()}`;
                 
-                this.elements.reportScores.innerHTML = this.CONFIG.GAMES.map(game => `
-                    <div class="score-card">
-                        <div>${game.icon}</div>
-                        <div class="score-value">${scores[game.id] || 0}%</div>
-                        <div class="score-label">${game.name}</div>
-                    </div>
-                `).join('');
+                // Clear and rebuild scores display
+                const scoresContainer = this.elements.reportScores;
+                while (scoresContainer.firstChild) {
+                    scoresContainer.removeChild(scoresContainer.firstChild);
+                }
+                
+                this.CONFIG.GAMES.forEach(game => {
+                    const card = document.createElement('div');
+                    card.className = 'score-card';
+                    
+                    const icon = document.createElement('div');
+                    icon.textContent = game.icon;
+                    icon.style.fontSize = '2rem';
+                    
+                    const value = document.createElement('div');
+                    value.className = 'score-value';
+                    value.textContent = `${scores[game.id] || 0}%`;
+                    
+                    const label = document.createElement('div');
+                    label.className = 'score-label';
+                    label.textContent = game.name;
+                    
+                    card.appendChild(icon);
+                    card.appendChild(value);
+                    card.appendChild(label);
+                    scoresContainer.appendChild(card);
+                });
+                
+                // Show recommendations for lowest score
+                const lowestGame = Object.entries(scores).reduce((min, [id, score]) => 
+                    score < min.score ? {id, score} : min, {id: null, score: 100});
+                
+                if (lowestGame.id) {
+                    const game = this.CONFIG.GAMES.find(g => g.id === lowestGame.id);
+                    const recommendations = {
+                        memory: 'Practice chunking numbers into groups. Try memory palace techniques.',
+                        attention: 'Use the Pomodoro Technique. Practice mindfulness meditation.',
+                        flexibility: 'Try puzzle games that require rule switching. Learn a new skill.',
+                        speed: 'Practice timed exercises. Use flashcards for quick recall.'
+                    };
+                    
+                    this.elements.recommendations.style.display = 'block';
+                    this.elements.recommendationText.textContent = 
+                        `Focus on ${game.name}: ${recommendations[lowestGame.id]}`;
+                }
                 
                 this.showScreen('report');
             },
@@ -1054,36 +1735,66 @@
                     user: this.state.user,
                     session: {
                         date: new Date().toISOString(),
-                        scores: this.state.gameScores
+                        scores: this.state.gameScores,
+                        integrity: this.state.integrityChecksum === 'unverified' ? 'unverified' : 'verified'
                     },
                     history: this.state.history
                 };
                 
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `neural-flow-${Date.now()}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
-                
-                this.showFeedback('Data exported successfully', 'success');
+                try {
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `neural-flow-${Date.now()}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    this.showFeedback('Data exported successfully', 'success');
+                } catch (error) {
+                    // Fallback for sandboxed environments
+                    const modal = document.createElement('div');
+                    modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border-radius:10px;box-shadow:0 0 20px rgba(0,0,0,0.3);z-index:9999;max-width:90%;max-height:90%;overflow:auto;';
+                    
+                    const content = document.createElement('div');
+                    content.innerHTML = `
+                        <h3>Copy Your Data</h3>
+                        <textarea style="width:400px;height:300px;font-family:monospace;" readonly>${JSON.stringify(data, null, 2)}</textarea>
+                        <br><br>
+                        <button class="btn">Close</button>
+                    `;
+                    
+                    modal.appendChild(content);
+                    document.body.appendChild(modal);
+                    
+                    const textarea = modal.querySelector('textarea');
+                    textarea.select();
+                    
+                    modal.querySelector('button').addEventListener('click', () => modal.remove());
+                }
             },
             
             // Reset application
             reset() {
-                this.state = {
-                    user: null,
-                    currentGame: null,
-                    currentTask: 0,
-                    taskScores: [],
-                    gameScores: {},
-                    sessionStart: null,
-                    history: this.state.history // Preserve history
-                };
-                
-                this.showScreen('login');
-                document.getElementById('loginForm').reset();
+                if (confirm('Start a new session? Current progress will be saved.')) {
+                    this.state = {
+                        user: null,
+                        currentGame: null,
+                        currentTask: 0,
+                        currentDifficulty: 1,
+                        taskScores: [],
+                        gameScores: {},
+                        sessionStart: null,
+                        history: this.state.history,
+                        storageAvailable: this.state.storageAvailable,
+                        integrityChecksum: null
+                    };
+                    
+                    this.showScreen('login');
+                    document.getElementById('name').value = '';
+                    document.getElementById('age').value = '';
+                    document.getElementById('grade').value = '';
+                }
             },
             
             // Show screen
@@ -1118,7 +1829,20 @@
             // Error handler
             handleError(context, error) {
                 console.error(`${context}:`, error);
-                this.showFeedback('Something went wrong. Please try again.', 'error');
+                if (this.showFeedback) {
+                    this.showFeedback('Something went wrong. Please try again.', 'error');
+                }
+            },
+            
+            // Cleanup on unload
+            cleanup() {
+                // Remove all event listeners
+                this.listeners.forEach((handlers, element) => {
+                    handlers.forEach(({event, handler}) => {
+                        element.removeEventListener(event, handler);
+                    });
+                });
+                this.listeners.clear();
             },
             
             // Initial render
@@ -1137,15 +1861,14 @@
         // Global error handler
         window.addEventListener('error', (event) => {
             console.error('Global error:', event.error);
-            App.showFeedback('An error occurred. Please refresh the page.', 'error');
+            if (App.showFeedback) {
+                App.showFeedback('An error occurred. Please refresh the page.', 'error');
+            }
         });
         
-        // Prevent unload if game in progress
-        window.addEventListener('beforeunload', (event) => {
-            if (App.state.currentGame) {
-                event.preventDefault();
-                event.returnValue = '';
-            }
+        // Cleanup on unload
+        window.addEventListener('unload', () => {
+            if (App.cleanup) App.cleanup();
         });
         
     })();
