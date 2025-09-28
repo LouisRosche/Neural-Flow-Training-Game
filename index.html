@@ -1238,14 +1238,15 @@
                 const area = this.elements.gameArea;
                 const state = this.memoryState;
                 
-            // Clear area but keep instructions
-            while (area.firstChild) {
-                if (area.firstChild.className !== 'game-instructions') {
-                    area.removeChild(area.firstChild);
-                } else {
-                    break; // Keep instructions at top
+                // Clear area but keep instructions
+                const children = Array.from(area.children);
+                const instructionsIndex = children.findIndex(child => child.className === 'game-instructions');
+                if (instructionsIndex > 0) {
+                    // Remove elements after instructions
+                    for (let i = children.length - 1; i > instructionsIndex; i--) {
+                        area.removeChild(children[i]);
+                    }
                 }
-            }
                 
                 if (state.showIndex < state.sequence.length) {
                     // Show current number with position indicator
