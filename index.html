@@ -1143,18 +1143,18 @@
                 // Clear game area
                 const area = this.elements.gameArea;
                 // Clear area but keep instructions
+                const instructions = area.querySelector('.game-instructions');
                 while (area.firstChild) {
-                    if (area.firstChild.className !== 'game-instructions') {
-                        area.removeChild(area.firstChild);
-                    } else {
-                        break; // Keep instructions at top
-                    }
+                    area.removeChild(area.firstChild);
+                }
+                if (instructions) {
+                    area.appendChild(instructions);
                 }
                 
                 // Add instructions first
-                const instructions = this.showGameInstructions(this.state.currentGame);
-                if (instructions) {
-                    area.appendChild(instructions);
+                const newInstructions = this.showGameInstructions(this.state.currentGame);
+                if (newInstructions) {
+                    area.appendChild(newInstructions);
                 }
                 
                 // Adaptive difficulty adjustment
@@ -1241,7 +1241,7 @@
                 // Clear area but keep instructions
                 const children = Array.from(area.children);
                 const instructionsIndex = children.findIndex(child => child.className === 'game-instructions');
-                if (instructionsIndex > 0) {
+                if (instructionsIndex >= 0) {
                     // Remove elements after instructions
                     for (let i = children.length - 1; i > instructionsIndex; i--) {
                         area.removeChild(children[i]);
@@ -1298,13 +1298,13 @@
                 const state = this.memoryState;
                 
             // Clear area but keep instructions
-            while (area.firstChild) {
-                if (area.firstChild.className !== 'game-instructions') {
+                const instructions = area.querySelector('.game-instructions');
+                while (area.firstChild) {
                     area.removeChild(area.firstChild);
-                } else {
-                    break; // Keep instructions at top
                 }
-            }
+                if (instructions) {
+                    area.appendChild(instructions);
+                }
                 
                 // Title
                 const title = document.createElement('h3');
@@ -1393,13 +1393,13 @@
                         // Show score in same area format
                         const area = this.elements.gameArea;
                         // Clear area but keep instructions
-                    while (area.firstChild) {
-                        if (area.firstChild.className !== 'game-instructions') {
+                        const instructions = area.querySelector('.game-instructions');
+                        while (area.firstChild) {
                             area.removeChild(area.firstChild);
-                        } else {
-                            break; // Keep instructions at top
                         }
-                    }
+                        if (instructions) {
+                            area.appendChild(instructions);
+                        }
                         
                         const scoreDisplay = document.createElement('div');
                         scoreDisplay.className = 'stimulus';
@@ -1481,16 +1481,6 @@
                 // Start spawning targets
                 this.spawnTarget();
             },
-
-                // After creating the instructions, don't clear them
-                // Just append the new elements after the instructions
-                const existingInstructions = area.querySelector('.game-instructions');
-                if (!existingInstructions) {
-                    // Only clear if no instructions present
-                    while (area.firstChild) {
-                        area.removeChild(area.firstChild);
-                    }
-                }
             
             // Spawn targets for attention game
             spawnTarget() {
@@ -1649,12 +1639,12 @@
                 const num = Math.floor(Math.random() * 20) + 1;
                 
                 // Clear area but keep instructions
+                const instructions = area.querySelector('.game-instructions');
                 while (area.firstChild) {
-                    if (area.firstChild.className !== 'game-instructions') {
-                        area.removeChild(area.firstChild);
-                    } else {
-                        break; // Keep instructions at top
-                    }
+                    area.removeChild(area.firstChild);
+                }
+                if (instructions) {
+                    area.appendChild(instructions);
                 }
                 
                 // Create UI
@@ -1801,12 +1791,12 @@
                 const options = [...patterns].sort(() => Math.random() - 0.5);
                 
                 // Clear area but keep instructions
+                const instructions = area.querySelector('.game-instructions');
                 while (area.firstChild) {
-                    if (area.firstChild.className !== 'game-instructions') {
-                        area.removeChild(area.firstChild);
-                    } else {
-                        break; // Keep instructions at top
-                    }
+                    area.removeChild(area.firstChild);
+                }
+                if (instructions) {
+                    area.appendChild(instructions);
                 }
                 
                 // Create UI
@@ -1838,19 +1828,6 @@
                 area.appendChild(buttons);
                 
                 state.current++;
-            },
-            
-            // Override handleResponse for speed game
-            handleResponse(response, correct) {
-                if (this.state.currentGame === 'speed') {
-                    const btn = event.target;
-                    const startTime = parseInt(btn.dataset.startTime);
-                    const rt = Date.now() - startTime; // FIXED: Proper time calculation
-                    
-                    this.speedState.reactionTimes.push(rt);
-                    if (correct === 'true') this.speedState.correct++;
-                    
-                    setTimeout(() => this.runSpeedTrial(), 300);
             },
             
             // Next task
@@ -2099,7 +2076,7 @@
             if (App.cleanup) App.cleanup();
         });
         
-    })();
+    })();}
     </script>
 </body>
 </html>
