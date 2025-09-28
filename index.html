@@ -137,6 +137,29 @@
             gap: 1rem;
         }
 
+        .game-instructions {
+            background: #eff6ff;
+            border: 2px solid var(--primary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .game-instructions h4 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .game-instructions ul {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+        
+        .game-instructions li {
+            margin: 0.25rem 0;
+            color: var(--text-muted);
+        }
+
         /* Buttons */
         .btn {
             display: inline-block;
@@ -699,6 +722,40 @@
                     { id: 'flexibility', name: 'Cognitive Flexibility', icon: '🔄', description: 'Switch between rules' },
                     { id: 'speed', name: 'Processing Speed', icon: '⚡', description: 'Quick decisions' }
                 ],
+                GAME_INSTRUCTIONS: {
+                    memory: {
+                        instruction: "Watch the sequence of numbers carefully. After all numbers are shown, enter them in the exact same order.",
+                        tips: [
+                            "Use 'chunking': Group numbers into smaller sets (e.g., 4-7-2 becomes 'forty-seven, two')",
+                            "Create a story: Link numbers to meaningful dates or familiar patterns",
+                            "Use the Method of Loci: Visualize placing each number in a familiar location"
+                        ]
+                    },
+                    attention: {
+                        instruction: "Click only the BLUE circles as quickly as possible. Avoid clicking or hovering over RED circles.",
+                        tips: [
+                            "Keep your eyes centered on the screen rather than chasing targets",
+                            "Use peripheral vision to detect new targets appearing",
+                            "Maintain steady breathing to improve reaction time and reduce false clicks"
+                        ]
+                    },
+                    flexibility: {
+                        instruction: "Apply the current rule to determine the correct answer. Rules will change between trials - pay attention!",
+                        tips: [
+                            "Read the rule carefully before looking at the number",
+                            "Verbalize the rule to yourself to maintain focus during switches",
+                            "Reset your mindset between trials - don't carry over the previous rule"
+                        ]
+                    },
+                    speed: {
+                        instruction: "Match the pattern shown as quickly and accurately as possible.",
+                        tips: [
+                            "Focus on the distinctive features rather than reading every letter",
+                            "Use pattern recognition rather than letter-by-letter comparison",
+                            "Keep your hand positioned over the likely answer area to reduce movement time"
+                        ]
+                    }
+                },
                 STORAGE_KEY: 'neural_flow_data',
                 MAX_TASKS: 3,
                 ADAPTIVE_THRESHOLD: 0.7, // 70% success to increase difficulty
@@ -938,7 +995,25 @@
                 if (target.classList.contains('response-btn')) {
                     const response = target.dataset.response;
                     const correct = target.dataset.correct;
-                    this.handleResponse(response, correct);
+                    
+                    if (this.state.currentGame === 'flexibility') {
+                        const state = this.flexState;
+                        const rt = Date.now() - state.startTime;
+                        
+                        state.reactionTimes.push(rt);
+                        if (correct === 'true') state.correct++;
+                        
+                        setTimeout(() => this.runFlexTrial(), 500);
+                    } else if (this.state.currentGame === 'speed') {
+                        const startTime = parseInt(target.dataset.startTime);
+                        const rt = Date.now() - startTime;
+                        
+                        this.speedState.reactionTimes.push(rt);
+                        if (correct === 'true') this.speedState.correct++;
+                        
+                        setTimeout(() => this.runSpeedTrial(), 300);
+                    }
+                    return; // Prevent any further processing
                 }
                 
                 // Targets in attention game
@@ -1067,8 +1142,19 @@
                 
                 // Clear game area
                 const area = this.elements.gameArea;
+                // Clear area but keep instructions
                 while (area.firstChild) {
-                    area.removeChild(area.firstChild);
+                    if (area.firstChild.className !== 'game-instructions') {
+                        area.removeChild(area.firstChild);
+                    } else {
+                        break; // Keep instructions at top
+                    }
+                }
+                
+                // Add instructions first
+                const instructions = this.showGameInstructions(this.state.currentGame);
+                if (instructions) {
+                    area.appendChild(instructions);
                 }
                 
                 // Adaptive difficulty adjustment
@@ -1079,6 +1165,11 @@
                     } else if (lastScore < 50) {
                         this.state.currentDifficulty = Math.max(this.state.currentDifficulty - 1, 1);
                     }
+                }
+                
+                // Store task scores at state level to avoid recursion issues
+                if (!this.state.taskScores) {
+                    this.state.taskScores = [];
                 }
                 
                 // Run appropriate task
@@ -1099,7 +1190,25 @@
                         throw new Error('Unknown game type');
                 }
             },
-            
+
+            showGameInstructions(gameType) {
+                const instructions = this.CONFIG.GAME_INSTRUCTIONS[gameType];
+                if (!instructions) return null;
+                
+                const div = document.createElement('div');
+                div.className = 'game-instructions';
+                div.innerHTML = `
+                    <h4>How to Play:</h4>
+                    <p>${instructions.instruction}</p>
+                    <h4>Tips from Research:</h4>
+                    <ul>
+                        ${instructions.tips.map(tip => `<li>${tip}</li>`).join('')}
+                    </ul>
+                `;
+                
+                return div;
+            },
+        
             // Memory task with DOM manipulation
             runMemoryTask(area) {
                 const baseLength = 3;
@@ -1129,10 +1238,14 @@
                 const area = this.elements.gameArea;
                 const state = this.memoryState;
                 
-                // Clear area
-                while (area.firstChild) {
+            // Clear area but keep instructions
+            while (area.firstChild) {
+                if (area.firstChild.className !== 'game-instructions') {
                     area.removeChild(area.firstChild);
+                } else {
+                    break; // Keep instructions at top
                 }
+            }
                 
                 if (state.showIndex < state.sequence.length) {
                     // Show current number with position indicator
@@ -1183,10 +1296,14 @@
                 const area = this.elements.gameArea;
                 const state = this.memoryState;
                 
-                // Clear area
-                while (area.firstChild) {
+            // Clear area but keep instructions
+            while (area.firstChild) {
+                if (area.firstChild.className !== 'game-instructions') {
                     area.removeChild(area.firstChild);
+                } else {
+                    break; // Keep instructions at top
                 }
+            }
                 
                 // Title
                 const title = document.createElement('h3');
@@ -1238,8 +1355,24 @@
                 
                 if (state.userInput.length >= state.length) return;
                 
+                const position = state.userInput.length;
                 state.userInput.push(num);
                 
+                // Real-time validation
+                const isCorrect = num === state.sequence[position];
+                
+                // Update display with color feedback
+                const slot = document.getElementById(`slot-${position}`);
+                if (slot) {
+                    slot.textContent = num;
+                    slot.classList.add('filled');
+                    // Add visual feedback for correct/incorrect
+                    slot.style.background = isCorrect ? 'var(--success)' : 'var(--error)';
+                    slot.style.borderColor = isCorrect ? 'var(--success)' : 'var(--error)';
+                    slot.style.color = 'white';
+                }
+                
+                // Check if complete
                 if (state.userInput.length >= state.length) {
                     // Calculate score
                     let correct = 0;
@@ -1253,11 +1386,36 @@
                     const score = Math.round((accuracy * 80) + (timeBonus * 20));
                     
                     this.state.taskScores.push(score);
-                    this.showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
                     
-                    setTimeout(() => this.nextTask(), 1500);
+                    // Delay before showing feedback so user can see last input
+                    setTimeout(() => {
+                        // Show score in same area format
+                        const area = this.elements.gameArea;
+                        // Clear area but keep instructions
+                    while (area.firstChild) {
+                        if (area.firstChild.className !== 'game-instructions') {
+                            area.removeChild(area.firstChild);
+                        } else {
+                            break; // Keep instructions at top
+                        }
+                    }
+                        
+                        const scoreDisplay = document.createElement('div');
+                        scoreDisplay.className = 'stimulus';
+                        scoreDisplay.textContent = `${score}%`;
+                        scoreDisplay.style.color = score >= 70 ? 'var(--success)' : 'var(--warning)';
+                        
+                        const message = document.createElement('h3');
+                        message.textContent = score >= 70 ? 'Well done!' : 'Keep practicing!';
+                        message.style.textAlign = 'center';
+                        
+                        area.appendChild(scoreDisplay);
+                        area.appendChild(message);
+                        
+                        setTimeout(() => this.nextTask(), 1500);
+                    }, 1000); // Give time to see the last input
                 } else {
-                    // Update display
+                    // Update display for next input
                     this.showMemoryInput();
                 }
             },
@@ -1322,6 +1480,16 @@
                 // Start spawning targets
                 this.spawnTarget();
             },
+
+                // After creating the instructions, don't clear them
+                // Just append the new elements after the instructions
+                const existingInstructions = area.querySelector('.game-instructions');
+                if (!existingInstructions) {
+                    // Only clear if no instructions present
+                    while (area.firstChild) {
+                        area.removeChild(area.firstChild);
+                    }
+                }
             
             // Spawn targets for attention game
             spawnTarget() {
@@ -1479,9 +1647,13 @@
                 
                 const num = Math.floor(Math.random() * 20) + 1;
                 
-                // Clear area
+                // Clear area but keep instructions
                 while (area.firstChild) {
-                    area.removeChild(area.firstChild);
+                    if (area.firstChild.className !== 'game-instructions') {
+                        area.removeChild(area.firstChild);
+                    } else {
+                        break; // Keep instructions at top
+                    }
                 }
                 
                 // Create UI
@@ -1627,9 +1799,13 @@
                 const correct = patterns[Math.floor(Math.random() * patterns.length)];
                 const options = [...patterns].sort(() => Math.random() - 0.5);
                 
-                // Clear area
+                // Clear area but keep instructions
                 while (area.firstChild) {
-                    area.removeChild(area.firstChild);
+                    if (area.firstChild.className !== 'game-instructions') {
+                        area.removeChild(area.firstChild);
+                    } else {
+                        break; // Keep instructions at top
+                    }
                 }
                 
                 // Create UI
@@ -1674,16 +1850,15 @@
                     if (correct === 'true') this.speedState.correct++;
                     
                     setTimeout(() => this.runSpeedTrial(), 300);
-                } else {
-                    // Handle other games' responses
-                    this.handleResponse(response, correct);
-                }
             },
             
             // Next task
             nextTask() {
                 this.state.currentTask++;
-                setTimeout(() => this.runTask(), 1000);
+                // Use a timeout to break the call stack
+                setTimeout(() => {
+                    this.runTask();
+                }, 100);
             },
             
             // End game
