@@ -785,14 +785,12 @@
             // Initialize application
             init() {
                 try {
-                    console.log('Initializing Neural Flow...');
                     this.testStorage();
                     this.cacheElements();
                     this.loadState();
                     this.bindEvents();
                     this.setupIntegrityCheck();
                     this.render();
-                    console.log('Neural Flow initialized successfully');
                 } catch (error) {
                     this.handleError('Initialization failed', error);
                 }
@@ -806,7 +804,6 @@
                     localStorage.removeItem(test);
                     this.state.storageAvailable = true;
                 } catch(e) {
-                    console.warn('localStorage not available');
                     this.state.storageAvailable = false;
                 }
             },
@@ -855,12 +852,9 @@
                         // Verify data integrity
                         if (this.verifyChecksum(data)) {
                             this.state.history = data.history || [];
-                        } else {
-                            console.warn('Data integrity check failed');
                         }
                     }
                 } catch (error) {
-                    console.warn('Could not load saved state:', error);
                 }
             },
             
@@ -879,7 +873,21 @@
                     
                     localStorage.setItem(this.CONFIG.STORAGE_KEY, JSON.stringify(data));
                 } catch (error) {
-                    console.warn('Could not save state:', error);
+                    // REPLACE THIS CATCH BLOCK
+                    if (error.name === 'QuotaExceededError') {
+                        // Trim history to last 50 items and retry
+                        this.state.history = this.state.history.slice(-50);
+                        try {
+                            const data = {
+                                history: this.state.history,
+                                timestamp: Date.now()
+                            };
+                            data.checksum = this.generateChecksum(data);
+                            localStorage.setItem(this.CONFIG.STORAGE_KEY, JSON.stringify(data));
+                        } catch(e) {
+                            console.warn('Could not save state even after trimming:', e);
+                        }
+                    }
                 }
             },
             
@@ -921,12 +929,6 @@
                 }, 500);
             },
             
-            // Handle developer tools detection
-            onDevToolsOpen() {
-                console.warn('Developer tools detected - results may be marked as unverified');
-                this.state.integrityChecksum = 'unverified';
-            },
-            
             // Bind event listeners using event delegation
             bindEvents() {
                 // Login button
@@ -934,9 +936,8 @@
                 
                 // Exit game button
                 // Make exit button always accessible
-                if (this.elements.exitGameBtn) {
-                    this.elements.exitGameBtn.addEventListener('click', () => this.exitGame());
-                }
+                this.addEventListener(this.elements.exitGameBtn, 'click', () => this.exitGame());
+
                 
                 // Export button
                 this.addEventListener(this.elements.exportBtn, 'click', () => this.exportData());
@@ -1126,6 +1127,38 @@
                 } catch (error) {
                     this.handleError('Could not start game', error);
                     this.showScreen('menu');
+                }
+            },
+
+            // Start a game
+            startGame(gameId) {
+                try {
+                    this.state.currentGame = gameId;
+                    this.state.currentTask = 0;
+                    this.state.currentDifficulty = 1;
+                    this.state.taskScores = [];
+                    
+                    this.showScreen('game');
+                    this.runTask();
+                } catch (error) {
+                    this.handleError('Could not start game', error);
+                    this.showScreen('menu');
+                }
+            },
+            
+            // ADD THIS NEW METHOD
+            // Clean up game resources
+            cleanupCurrentGame() {
+                // Reset all game states
+                this.memoryState = null;
+                this.attentionState = null;
+                this.flexState = null;
+                this.speedState = null;
+                // Clear the game area
+                if (this.elements.gameArea) {
+                    while (this.elements.gameArea.firstChild) {
+                        this.elements.gameArea.removeChild(this.elements.gameArea.firstChild);
+                    }
                 }
             },
             
@@ -1485,6 +1518,9 @@
             // Spawn targets for attention game
             spawnTarget() {
                 const state = this.attentionState;
+                
+                // ADD THIS LINE to stop spawning if game was exited
+                if (!state || this.state.currentGame !== 'attention') return;
                 
                 if (state.targetsShown >= state.targets && state.active.length === 0) {
                     this.endAttentionTask();
@@ -1854,7 +1890,8 @@
             
             // Exit game
             exitGame() {
-                if (confirm('Exit game? Progress will be lost.')) {
+                if (this.state.currentTask === 0 || confirm('Exit game? Progress will be lost.')) {
+                    this.cleanupCurrentGame(); // ADD THIS LINE to use the new cleanup method
                     this.state.currentGame = null;
                     this.state.currentTask = 0;
                     this.state.taskScores = [];
