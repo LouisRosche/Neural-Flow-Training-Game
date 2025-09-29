@@ -921,7 +921,7 @@
                         window.outerWidth - window.innerWidth > threshold) {
                         if (!devtools.open) {
                             devtools.open = true;
-                            this.onDevToolsOpen();
+                            this.state.integrityChecksum = 'unverified';
                         }
                     } else {
                         devtools.open = false;
@@ -1136,24 +1136,7 @@
                     this.showScreen('menu');
                 }
             },
-
-            // Start a game
-            startGame(gameId) {
-                try {
-                    this.state.currentGame = gameId;
-                    this.state.currentTask = 0;
-                    this.state.currentDifficulty = 1;
-                    this.state.taskScores = [];
-                    
-                    this.showScreen('game');
-                    this.runTask();
-                } catch (error) {
-                    this.handleError('Could not start game', error);
-                    this.showScreen('menu');
-                }
-            },
             
-            // ADD THIS NEW METHOD
             // Clean up game resources
             cleanupCurrentGame() {
                 // Reset all game states
@@ -1208,15 +1191,8 @@
                 area.appendChild(readyContainer);
             },
             
-            // ADD THIS NEW METHOD right after runTask
             startCurrentTask() {
                 const area = this.elements.gameArea;
-                
-                // Add instructions first
-                const newInstructions = this.showGameInstructions(this.state.currentGame);
-                if (newInstructions) {
-                    area.appendChild(newInstructions);
-                }
                 
                 // Adaptive difficulty adjustment
                 if (this.state.taskScores.length > 0) {
@@ -1250,9 +1226,7 @@
                     default:
                         throw new Error('Unknown game type');
                 }
-                                // ADD THIS NEW METHOD right after runTask
-                startCurrentTask() {
-                    const area = this.elements.gameArea;
+            },
                     
                     // Adaptive difficulty adjustment
                     if (this.state.taskScores.length > 0) {
@@ -1453,8 +1427,6 @@
                 const state = this.memoryState;
                 //CHECK
                 if (!state || state.userInput.length >= state.length) return;
-                
-                if (state.userInput.length >= state.length) return;
                 
                 const position = state.userInput.length;
                 state.userInput.push(num);
