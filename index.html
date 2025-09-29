@@ -994,8 +994,15 @@
                 
                 // Response buttons
                 if (target.classList.contains('response-btn')) {
+                    // ADD THIS CHECK to prevent multiple clicks
+                    if (target.disabled) return;
+                    
                     const response = target.dataset.response;
                     const correct = target.dataset.correct;
+                    
+                    // DISABLE ALL RESPONSE BUTTONS after click
+                    const allButtons = document.querySelectorAll('.response-btn');
+                    allButtons.forEach(btn => btn.disabled = true);
                     
                     if (this.state.currentGame === 'flexibility') {
                         const state = this.flexState;
@@ -1175,14 +1182,35 @@
                 
                 // Clear game area
                 const area = this.elements.gameArea;
-                // Clear area but keep instructions
-                const instructions = area.querySelector('.game-instructions');
                 while (area.firstChild) {
                     area.removeChild(area.firstChild);
                 }
+                
+                // ADD INSTRUCTIONS AND READY BUTTON
+                const instructions = this.showGameInstructions(this.state.currentGame);
                 if (instructions) {
                     area.appendChild(instructions);
                 }
+                
+                // Add ready button
+                const readyContainer = document.createElement('div');
+                readyContainer.style.cssText = 'text-align:center;margin-top:2rem;';
+                
+                const readyBtn = document.createElement('button');
+                readyBtn.className = 'btn btn-success';
+                readyBtn.textContent = `Start Round ${this.state.currentTask + 1} of ${this.CONFIG.MAX_TASKS}`;
+                readyBtn.onclick = () => {
+                    readyContainer.remove();
+                    this.startCurrentTask();
+                };
+                
+                readyContainer.appendChild(readyBtn);
+                area.appendChild(readyContainer);
+            },
+            
+            // ADD THIS NEW METHOD right after runTask
+            startCurrentTask() {
+                const area = this.elements.gameArea;
                 
                 // Add instructions first
                 const newInstructions = this.showGameInstructions(this.state.currentGame);
@@ -1222,6 +1250,43 @@
                     default:
                         throw new Error('Unknown game type');
                 }
+                                // ADD THIS NEW METHOD right after runTask
+                startCurrentTask() {
+                    const area = this.elements.gameArea;
+                    
+                    // Adaptive difficulty adjustment
+                    if (this.state.taskScores.length > 0) {
+                        const lastScore = this.state.taskScores[this.state.taskScores.length - 1];
+                        if (lastScore >= 80) {
+                            this.state.currentDifficulty = Math.min(this.state.currentDifficulty + 1, 5);
+                        } else if (lastScore < 50) {
+                            this.state.currentDifficulty = Math.max(this.state.currentDifficulty - 1, 1);
+                        }
+                    }
+                    
+                    // Store task scores at state level to avoid recursion issues
+                    if (!this.state.taskScores) {
+                        this.state.taskScores = [];
+                    }
+                    
+                    // Run appropriate task
+                    switch (this.state.currentGame) {
+                        case 'memory':
+                            this.runMemoryTask(area);
+                            break;
+                        case 'attention':
+                            this.runAttentionTask(area);
+                            break;
+                        case 'flexibility':
+                            this.runFlexibilityTask(area);
+                            break;
+                        case 'speed':
+                            this.runSpeedTask(area);
+                            break;
+                        default:
+                            throw new Error('Unknown game type');
+                    }
+                },
             },
 
             showGameInstructions(gameType) {
@@ -1386,6 +1451,8 @@
             // Handle memory input
             handleMemoryInput(num) {
                 const state = this.memoryState;
+                //CHECK
+                if (!state || state.userInput.length >= state.length) return;
                 
                 if (state.userInput.length >= state.length) return;
                 
