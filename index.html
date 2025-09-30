@@ -1227,6 +1227,30 @@
                         throw new Error('Unknown game type');
                 }
             },
+                
+                // Store task scores at state level to avoid recursion issues
+                if (!this.state.taskScores) {
+                    this.state.taskScores = [];
+                }
+                
+                // Run appropriate task
+                switch (this.state.currentGame) {
+                    case 'memory':
+                        this.runMemoryTask(area);
+                        break;
+                    case 'attention':
+                        this.runAttentionTask(area);
+                        break;
+                    case 'flexibility':
+                        this.runFlexibilityTask(area);
+                        break;
+                    case 'speed':
+                        this.runSpeedTask(area);
+                        break;
+                    default:
+                        throw new Error('Unknown game type');
+                }
+            },
                     
                     // Adaptive difficulty adjustment
                     if (this.state.taskScores.length > 0) {
